@@ -1,0 +1,44 @@
+name: Clean Up Legacy PR Preview Labels
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  pull-requests: read
+  issues: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Hostinger deploys main only. Closing a PR must not reset production data,
+      # invoke the former AWS preview scripts, or rerun another PR's deployment.
+      - name: Remove retired preview labels from the closed PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: pull } = await github.rest.pulls.get({
+              owner, repo, pull_number: issue_number,
+            });
+            if (pull.state !== 'closed') {
+              core.info('PR was reopened; leaving its labels unchanged.');
+              return;
+            }
+            const retiredLabels = pull.labels
+              .map(label => label.name)
+              .filter(name => /^(preview-slot-[123]|Queued)$/.test(name));
+            for (const name of retiredLabels) {
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number, name });
+                core.info(`Removed ${name}.`);
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                core.info(`${name} was already removed.`);
+              }
+            }
+            core.info('PR label cleanup complete. No hosting resources were changed.');
