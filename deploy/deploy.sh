@@ -6,10 +6,11 @@ set -euo pipefail
 # HOSTINGER_DOMAIN, HOSTINGER_GIT_INSTALLATION_UUID (Hostinger Git installation).
 # Create the Node.js website and connect this repository in hPanel first.
 # Disable automatic push deployments so GitHub checks gate production releases.
-# Set HOST=0.0.0.0, GOOGLE_CLIENT_ID, and DATA_DIRECTORY in hPanel. Data must
+# Set HOST=0.0.0.0, APP_ORIGIN=https://your-domain, GOOGLE_CLIENT_ID,
+# ADMIN_EMAILS (comma-separated), and DATA_DIRECTORY in hPanel. Data must
 # live in private persistent storage OUTSIDE public_html and hbuilds, with backups.
-# Existing environment variables are preserved. This does not transfer old data
-# or replace the separate AWS Lambda/DynamoDB authentication implementation.
+# Existing environment variables are preserved. Existing AWS sessions are not
+# transferred; users sign in again. This script does not copy application data.
 
 for name in HOSTINGER_API_TOKEN HOSTINGER_USERNAME HOSTINGER_DOMAIN HOSTINGER_GIT_INSTALLATION_UUID GITHUB_REPOSITORY GITHUB_SHA; do
   if [[ -z "${!name:-}" ]]; then
