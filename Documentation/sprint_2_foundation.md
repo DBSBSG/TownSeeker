@@ -52,6 +52,6 @@ releases reach `main` through the team's review process. GitHub checks builds,
 formatting, types, authentication, APIs, and browser behavior. Hostinger deploys
 the Node.js application after those checks pass.
 
-The remaining AWS infrastructure files are legacy references. They are not the
-current runtime architecture. Actual Google login and deployment persistence
-must be verified on Hostinger before release.
+Actual Google login and deployment persistence must be verified on Hostinger
+before release. See [backup and recovery](backup_recovery.md) for offline data
+protection and restore drills.

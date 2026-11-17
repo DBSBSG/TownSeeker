@@ -24,7 +24,8 @@ files are build outputs, not source changes.
 - `pnpm exec playwright install chromium` installs the test browser.
 - `pnpm test` runs API, persistence, and browser tests.
 
-The deployment workflow runs quality checks for PRs and deploys `main` only.
+The deployment workflow runs quality checks for PRs, `stage`, and feature branches,
+and deploys `main` only.
 Live HTTP smoke checks run after a successful Hostinger deployment. Local tests
 use isolated stores and identity fixtures; they do not prove a successful live
 Google login or persistence across a Hostinger redeployment.
@@ -37,5 +38,5 @@ Keep secrets in Hostinger runtime settings or GitHub Actions secrets.
 The connected GitHub organization is DBSBSG.
 
 Diagrams may use Mermaid or another tool the team chooses. No Docker setup,
-paid diagramming service, or AWS account is required by the current development
-or deployment commands.
+paid diagramming service is required by the current development or deployment
+commands.

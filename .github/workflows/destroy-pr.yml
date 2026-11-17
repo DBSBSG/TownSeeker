@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 5
     steps:
       # Hostinger deploys main only. Closing a PR must not reset production data,
-      # invoke the former AWS preview scripts, or rerun another PR's deployment.
+      # invoke hosting commands, or rerun another PR's deployment.
       - name: Remove retired preview labels from the closed PR
         uses: actions/github-script@v7
         with:

@@ -4,7 +4,22 @@ playwright-report/
 
 .DS_Store
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+.aws/
 src/js
 GEMINI.md
 .codex
 /var/data/
+/var/
+/backups/
+*.townseeker-backup.json
+/data/*
+!/data/hunts.example.json
+!/data/hunts.schema.json
+!/data/user-data.schema.json
+coverage/
+*.log

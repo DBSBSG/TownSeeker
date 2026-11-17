@@ -133,9 +133,8 @@ clears retired preview labels.
 
 Configure deployment credentials and runtime settings as described in the
 [README](../README.md). `deploy/deploy.sh` submits a managed Node.js build through
-Hostinger's API and reports the deployed URL. It does not provision AWS resources,
-copy data, or run a static FTP upload. The old infrastructure and destroy scripts
-are retained as legacy references, not as current setup instructions.
+Hostinger's API and reports the deployed URL. Application data is managed separately
+with the offline [backup and recovery tools](backup_recovery.md).
 
 All runtime JSON belongs in a private, persistent `DATA_DIRECTORY`, outside
 `public_html`, build directories, and the static `src` directory. Restrict its
@@ -152,7 +151,7 @@ redeployment are separate release checks.
 `pnpm test` covers hunt/task validation, persistence and corrupt-store handling,
 concurrent writes, owner/contributor/organization permissions, admission controls,
 answer privacy, player isolation, navigation, and exports. Tests use temporary
-stores and do not overwrite tracked `data/hunts.json`.
+stores and do not use private runtime data from the working tree.
 
 ## Google-account task progress (#40)
 
@@ -167,7 +166,7 @@ The backend verifies Google's signature, issuer, audience, expiry, verified emai
 and authorized party through `google-auth-library`. It derives the storage key
 from the verified Google subject, rather than trusting an account ID or email
 submitted by the browser. Set `GOOGLE_CLIENT_ID` to the same client ID used by the
-existing sign-in integration. Configure it in Hostinger runtime settings; the Node.js application uses the existing authentication library. No AWS service or IAM permission is required.
+existing sign-in integration. Configure it in Hostinger runtime settings; the Node.js application uses the authentication library.
 
 Task completion is stored in the private
 `DATA_DIRECTORY/account-player-progress.json`:

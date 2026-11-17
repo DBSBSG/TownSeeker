@@ -8,15 +8,21 @@ TownSeeker supports creating hunts, defining tasks with answers and coordinates,
 
 ## Local development
 
-Use Node.js 22+ and pnpm 10.33.0.
+Use Node.js 22.18 or newer and pnpm 10.33.0. `.nvmrc` selects Node.js 22;
+dependency installation enforces the minimum Node.js version.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
-pnpm serve
+pnpm start
 ```
 
 Open `http://127.0.0.1:3000/`. Real Google browser sign-in requires the authentication variables and HTTPS described below; automated tests use isolated identity fixtures. After signing in, use Hunt Studio to create hunts and tasks or reopen hunts you own or contribute to.
+
+For local configuration, copy `.env.example` to `.env` and fill in the deployment
+values. `pnpm start` loads `.env` when present; existing environment variables
+take precedence. `pnpm serve` is an alias for the same startup command. Build
+TypeScript before starting. On Hostinger, configure runtime variables in hPanel.
 
 To collaborate, the hunt owner enters the contributor's Google email under **Contributors**. The invite becomes active when that person signs in with the same verified email. TownSeeker does not send an email, so share the site link with them. Contributors can add tasks; only the owner can grant, cancel, or remove access.
 
@@ -58,6 +64,11 @@ checked on every read and expired records are pruned on writes. Corrupt files
 are preserved and authentication fails closed rather than resetting them.
 Back up the private data directory, restrict access to it, and exclude it from
 source control.
+
+Use the offline `pnpm data:backup`, `pnpm data:verify`, and `pnpm data:restore`
+commands described in [Backup and recovery](Documentation/backup_recovery.md).
+Restore into a new directory and verify it before changing `DATA_DIRECTORY`.
+Login sessions are excluded from backups; users sign in after a restore.
 
 **Run one Node.js application process per data directory.** The file store
 serializes concurrent operations within that process, including consuming a nonce

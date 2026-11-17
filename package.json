@@ -3,19 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
     "lint": "eslint \"src/**/*.ts\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "serve": "node src/js/server/server.js",
+    "start": "node --env-file-if-exists=.env src/js/server/server.js",
+    "serve": "pnpm start",
+    "data:backup": "node server/dataBackup.mjs backup",
+    "data:verify": "node server/dataBackup.mjs verify",
+    "data:restore": "node server/dataBackup.mjs restore",
     "test": "playwright test",
-    "format:check": "prettier --check package.json src/ts/server src/ts/features/createHunt.ts src/ts/features/defineTask.ts src/ts/features/displayTasks.ts src/ts/features/huntRepository.ts src/admin.html src/player.html tests/huntValidation.test.ts data/hunts.schema.json src/ts/foundation/types.ts src/ts/validation/huntValidation.ts tests/displayTasks.test.ts src/css/foundation.css tests/huntPersistence.test.ts tests/huntConfiguration.spec.ts tests/deployment.spec.ts",
-    "build:admin": "tsc src/server/admin.ts --target ES2022 --module commonjs --lib ES2022,DOM --strict --skipLibCheck --outDir",
+    "format:check": "prettier --check package.json src/ts/server src/ts/features/createHunt.ts src/ts/features/defineTask.ts src/ts/features/displayTasks.ts src/ts/features/huntRepository.ts src/admin.html src/player.html tests/huntValidation.test.ts data/hunts.schema.json src/ts/foundation/types.ts src/ts/validation/huntValidation.ts tests/displayTasks.test.ts src/css/foundation.css tests/huntPersistence.test.ts tests/huntConfiguration.spec.ts tests/deployment.spec.ts server/dataBackup.mjs tests/dataBackup.test.ts",
     "check:admin": "tsc src/server/admin.ts --target ES2022 --module commonjs --lib ES2022,DOM --strict --skipLibCheck --noEmit",
     "test:admin": "node --experimental-strip-types --test src/server/admin.test.ts",
-    "format": "prettier --write package.json src/ts/server src/ts/features/createHunt.ts src/ts/features/defineTask.ts src/ts/features/displayTasks.ts src/ts/features/huntRepository.ts src/admin.html src/player.html tests/huntValidation.test.ts data/hunts.schema.json src/ts/foundation/types.ts src/ts/validation/huntValidation.ts tests/displayTasks.test.ts src/css/foundation.css tests/huntPersistence.test.ts tests/huntConfiguration.spec.ts tests/deployment.spec.ts"
+    "format": "prettier --write package.json src/ts/server src/ts/features/createHunt.ts src/ts/features/defineTask.ts src/ts/features/displayTasks.ts src/ts/features/huntRepository.ts src/admin.html src/player.html tests/huntValidation.test.ts data/hunts.schema.json src/ts/foundation/types.ts src/ts/validation/huntValidation.ts tests/displayTasks.test.ts src/css/foundation.css tests/huntPersistence.test.ts tests/huntConfiguration.spec.ts tests/deployment.spec.ts server/dataBackup.mjs tests/dataBackup.test.ts"
   },
   "packageManager": "pnpm@10.33.0",
   "devDependencies": {
