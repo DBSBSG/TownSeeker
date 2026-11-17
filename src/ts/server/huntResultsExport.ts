@@ -133,7 +133,7 @@ export async function resultsPdf(results: HuntResults): Promise<Uint8Array> {
   const newPage = () => {
     page = document.addPage([792, 612]);
     y = 570;
-    page.drawText("BUCHUNT / RESULTS EXPORT", {
+    page.drawText("TOWNSEEKER / RESULTS EXPORT", {
       x: margin,
       y,
       size: 15,

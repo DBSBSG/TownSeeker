@@ -1,5 +1,5 @@
 {
-  "name": "BucHunt",
+  "name": "TownSeeker",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -29,7 +29,6 @@
     "prettier": "^3.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "3.1152.0",
     "google-auth-library": "10.9.1",
     "pdf-lib": "1.17.1"
   }

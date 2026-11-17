@@ -11,7 +11,7 @@ const ownerId = "google-" + createHash("sha256").update("owner").digest("hex");
 const taskInput = {
   displayLabel: "Mascot",
   description: "Name the mascot",
-  requiredAnswer: "Bucky",
+  requiredAnswer: "Explorer",
   location: { latitude: 0, longitude: 0 },
   order: 1,
   answerCaseSensitive: false,
@@ -19,13 +19,13 @@ const taskInput = {
   points: 1000,
 };
 async function fixture(options: Record<string, unknown> = {}) {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-sprint6-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-sprint6-"));
   const hunts = new HuntStore(join(directory, "hunts.json"));
   const hunt = await hunts.create(
     {
       name: "Sprint Six",
       description: "Explore together",
-      organizationName: "ETSU",
+      organizationName: "DBSBSG",
       beginsAt: "2020-01-01T00:00:00Z",
       endsAt: null,
       taskOrderMode: "any",
@@ -90,7 +90,7 @@ test("organization membership governs organization hunt access and migration", a
   const f = await fixture();
   try {
     const created = await f.api("/api/player/account/organizations", "owner", {
-      name: "ETSU",
+      name: "DBSBSG",
     });
     expect(created.status).toBe(201);
     expect(f.hunt.maxParticipants).toBe(200);
@@ -138,7 +138,7 @@ test("organization membership governs organization hunt access and migration", a
       expect.objectContaining({
         id: f.hunt.id,
         organizationId,
-        organizationName: "ETSU",
+        organizationName: "DBSBSG",
         role: "contributor",
       }),
     );
@@ -157,7 +157,7 @@ test("organization membership governs organization hunt access and migration", a
       expect.objectContaining({
         id: f.hunt.id,
         organizationId,
-        organizationName: "ETSU",
+        organizationName: "DBSBSG",
       }),
     );
     expect(
@@ -166,7 +166,7 @@ test("organization membership governs organization hunt access and migration", a
     ).toBe(200);
     expect(
       (await f.api("/api/player/account/hunts", "member")).data.value[0],
-    ).toMatchObject({ organizationId, organizationName: "ETSU" });
+    ).toMatchObject({ organizationId, organizationName: "DBSBSG" });
     expect(
       (await f.api("/api/player/account/organization-hunts", "member")).data
         .value,
@@ -210,7 +210,7 @@ test("organization membership governs organization hunt access and migration", a
 async function identity(page: Page, token: string, admin = false) {
   await page.addInitScript((token) => {
     localStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         accountId: token,
@@ -218,7 +218,7 @@ async function identity(page: Page, token: string, admin = false) {
         idToken: token,
       }),
     );
-    localStorage.setItem(`buchunt.player-profile.${token}`, token);
+    localStorage.setItem(`townseeker.player-profile.${token}`, token);
   }, token);
   await page.route("**/api/auth/session", (route) =>
     route.fulfill({
@@ -270,7 +270,7 @@ test("#139 #143 #142 APIs enforce roles, admission limits, saved membership, and
       ).data.message,
     ).toContain("capacity");
     expect((await f.api(player, "one")).data.value.organizationName).toBe(
-      "ETSU",
+      "DBSBSG",
     );
     expect(
       (
@@ -327,7 +327,7 @@ test("#139 #143 #142 APIs enforce roles, admission limits, saved membership, and
     expect(
       (
         await f.api(player + `/tasks/${f.first.id}/answer`, "one", {
-          answer: "Bucky",
+          answer: "Explorer",
         })
       ).status,
     ).toBe(200);
@@ -438,7 +438,7 @@ test("#140 API blocks lobby answers, bypasses, late joining, and editing after s
     expect(
       (
         await f.api(player + `/tasks/${f.first.id}/answer`, "one", {
-          answer: "Bucky",
+          answer: "Explorer",
         })
       ).status,
     ).toBe(400);
@@ -468,7 +468,7 @@ test("#140 API blocks lobby answers, bypasses, late joining, and editing after s
     expect(
       (
         await f.api(player + `/tasks/${f.second.id}/answer`, "one", {
-          answer: "Bucky",
+          answer: "Explorer",
         })
       ).status,
     ).toBe(403);
@@ -489,13 +489,13 @@ test("#140 API blocks lobby answers, bypasses, late joining, and editing after s
     expect(
       (
         await f.api(player + `/tasks/${f.first.id}/answer`, "one", {
-          answer: "Bucky",
+          answer: "Explorer",
         })
       ).status,
     ).toBe(400);
     expect((await f.api(player, "one")).data.value.kahoot.submitted).toBe(true);
     await f.api(player + `/tasks/${f.first.id}/answer`, "two", {
-      answer: "Bucky",
+      answer: "Explorer",
     });
     expect((await f.api(player, "one")).data.value.kahoot.phase).toBe(
       "results",
@@ -534,7 +534,9 @@ test("#139 #142 #143 browser workflow edits settings and submits and reads a tas
     await player
       .getByRole("button", { name: "Join Hunt", exact: true })
       .click();
-    await expect(player.getByTestId("player-hunt-facts")).toContainText("ETSU");
+    await expect(player.getByTestId("player-hunt-facts")).toContainText(
+      "DBSBSG",
+    );
     await player.getByTestId("submit-issue").click();
     const report = player.getByRole("dialog", {
       name: "Submit Issue",
@@ -657,7 +659,7 @@ test("#139 #142 #143 browser workflow edits settings and submits and reads a tas
     await f.api(
       `/api/player/account/hunts/${f.hunt.id}/tasks/${f.first.id}/answer`,
       "one",
-      { answer: "Bucky" },
+      { answer: "Explorer" },
     );
     await admin.getByTestId("close-hunt-details").click();
     await admin.getByTestId("open-organizations").click();
@@ -677,7 +679,7 @@ test("#139 #142 #143 browser workflow edits settings and submits and reads a tas
     await expect(progress).toContainText("Mascot");
     await expect(progress).toContainText("Completed");
     await player.screenshot({
-      path: "/tmp/buchunt-traditional-player.png",
+      path: "/tmp/townseeker-traditional-player.png",
       fullPage: true,
     });
   } finally {
@@ -732,7 +734,7 @@ test("#140 browser players synchronize, reconnect, lock submissions, and finish 
     await players[0]
       .getByTestId("kahoot-player")
       .getByLabel("Your answer")
-      .fill("Bucky");
+      .fill("Explorer");
     await players[0]
       .getByTestId("kahoot-player")
       .getByRole("button", { name: "Submit answer" })
@@ -778,7 +780,7 @@ test("#140 browser players synchronize, reconnect, lock submissions, and finish 
         "Hunt complete!",
       );
     await admin.screenshot({
-      path: "/tmp/buchunt-kahoot-host.png",
+      path: "/tmp/townseeker-kahoot-host.png",
       fullPage: true,
     });
   } finally {

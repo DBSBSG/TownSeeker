@@ -1112,6 +1112,9 @@ body[data-page="home"] button:focus-visible {
     min-height: auto;
     margin: auto;
   }
+  body[data-page="home"] .art-glow {
+    right: 0;
+  }
   body[data-page="home"] .map-scene {
     height: clamp(15rem, 65vw, 22rem);
   }

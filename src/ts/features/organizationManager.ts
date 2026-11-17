@@ -7,7 +7,7 @@ import type {
   PlayerIdentity,
 } from "../foundation/types.js";
 
-const SESSION_KEY = "buchunt.player-session";
+const SESSION_KEY = "townseeker.player-session";
 type JsonResult<T> = OperationResult<T>;
 
 export function storedPlayerIdentity(): PlayerIdentity | null {
@@ -262,7 +262,7 @@ export function mountOrganizationManager(
       status.textContent = hunt.status;
       heading.append(title, status);
       const description = document.createElement("p");
-      description.textContent = hunt.description || "A BucHunt adventure.";
+      description.textContent = hunt.description || "A TownSeeker adventure.";
       const meta = document.createElement("p");
       meta.className = "organization-monitor-hunt-meta";
       const begins = new Date(hunt.beginsAt);

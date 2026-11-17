@@ -269,7 +269,7 @@ test("players can create, edit, and invite people to organizations", async ({
 }) => {
   await page.addInitScript(() => {
     localStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         accountId: "player-account",
@@ -277,7 +277,7 @@ test("players can create, edit, and invite people to organizations", async ({
         idToken: "test-owner-token",
       }),
     );
-    localStorage.setItem("buchunt.player-profile.player-account", "Owner");
+    localStorage.setItem("townseeker.player-profile.player-account", "Owner");
   });
   const organizations: {
     id: string;
@@ -506,7 +506,7 @@ test("create hunt organization selector lists current memberships", async ({
   await installAdminSession(page);
   await page.addInitScript(() => {
     localStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         accountId: "google-admin-123",
@@ -548,7 +548,7 @@ test("create hunt, save task and reload configuration", async ({ page }) => {
     route.fulfill({ contentType: "application/javascript", body: "" }),
   );
   await page.addInitScript(() => {
-    Object.defineProperty(window, "BUCHUNT_GOOGLE_CLIENT_ID", {
+    Object.defineProperty(window, "TOWNSEEKER_GOOGLE_CLIENT_ID", {
       value: "test-client-id",
     });
     const claims = btoa(
@@ -725,7 +725,7 @@ test("create hunt, save task and reload configuration", async ({ page }) => {
     .getByLabel("Task type", { exact: true })
     .selectOption("single-word-trivia");
   await page.getByLabel("Clue and instructions").fill("Read the plaque");
-  await page.getByLabel("Required answer", { exact: true }).fill("Bucky");
+  await page.getByLabel("Required answer", { exact: true }).fill("Explorer");
   await page.getByTestId("task-location-query").fill("Student Center");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByTestId("task-location-coordinates")).toContainText(
@@ -1090,7 +1090,9 @@ test("hunt owners, officers, and contributors get their assigned workspace permi
       .getByLabel("Task type", { exact: true })
       .selectOption("single-word-trivia");
     await member.getByLabel("Clue and instructions").fill("Look nearby");
-    await member.getByLabel("Required answer", { exact: true }).fill("Bucky");
+    await member
+      .getByLabel("Required answer", { exact: true })
+      .fill("Explorer");
     await clickMap(member, 36, -82);
     await expect(member.locator('[name="latitude"]')).toHaveValue("36");
     await expect(member.locator('[name="longitude"]')).toHaveValue("-82");

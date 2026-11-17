@@ -65,11 +65,11 @@ const isHomePage = document.body.dataset.page === "home";
 const isAdminPage = document.body.dataset.page === "admin";
 const foundationFeaturesReady = isAdminPage
   ? new Promise<void>((resolve) => {
-      if (document.documentElement.dataset.buchuntFeaturesReady === "true") {
+      if (document.documentElement.dataset.townseekerFeaturesReady === "true") {
         resolve();
         return;
       }
-      document.addEventListener("buchunt:features-ready", () => resolve(), {
+      document.addEventListener("townseeker:features-ready", () => resolve(), {
         once: true,
       });
     })
@@ -79,8 +79,8 @@ const signOut = document.getElementById("sign-out") as HTMLButtonElement | null;
 const homeSignInLink = document.getElementById(
   "home-sign-in-link",
 ) as HTMLElement | null;
-const PLAYER_SESSION_KEY = "buchunt.player-session";
-const PLAYER_PROFILE_KEY_PREFIX = "buchunt.player-profile.";
+const PLAYER_SESSION_KEY = "townseeker.player-session";
+const PLAYER_PROFILE_KEY_PREFIX = "townseeker.player-profile.";
 let expiryTimer: ReturnType<typeof setTimeout> | undefined;
 let google: GoogleIdentity | undefined;
 let organizationManager: ReturnType<typeof mountOrganizationManager>;
@@ -469,7 +469,8 @@ async function showSession(): Promise<void> {
   if (isAdminPage && isAdministrator) {
     organizationManager ??= mountOrganizationManager(
       document,
-      () => document.dispatchEvent(new Event("buchunt:organizations-changed")),
+      () =>
+        document.dispatchEvent(new Event("townseeker:organizations-changed")),
       false,
     );
     organizationManager?.setIdentity(storedPlayerIdentity());
@@ -534,7 +535,7 @@ signOut?.addEventListener("click", async () => {
   try {
     await request("/api/auth/logout", {});
     google?.accounts.id.disableAutoSelect();
-    signedOut("Signed out of BucHunt.");
+    signedOut("Signed out of TownSeeker.");
     if (isHomePage) await prepareGoogle();
   } catch (error) {
     showError(error);
@@ -567,7 +568,7 @@ async function initialize(): Promise<void> {
     return;
   } catch {
     signedOut(
-      isHomePage ? "" : "Sign in from the BucHunt home page to continue.",
+      isHomePage ? "" : "Sign in from the TownSeeker home page to continue.",
     );
   }
   if (isHomePage) await prepareGoogle();

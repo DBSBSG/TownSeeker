@@ -13,7 +13,7 @@ import {
 const fixedTime = new Date("2026-10-15T12:00:00.000Z");
 
 async function withStore(run) {
-  const dataDir = await mkdtemp(path.join(tmpdir(), "buchunt-user-store-"));
+  const dataDir = await mkdtemp(path.join(tmpdir(), "townseeker-user-store-"));
   const store = createUserStore({
     dataDir,
     clock: () => fixedTime,
@@ -183,7 +183,9 @@ test("preserves and reports corrupt or unsupported user files", async () => {
 });
 
 test("reports storage failures without claiming the profile was saved", async () => {
-  const parent = await mkdtemp(path.join(tmpdir(), "buchunt-user-store-failure-"));
+  const parent = await mkdtemp(
+    path.join(tmpdir(), "townseeker-user-store-failure-"),
+  );
   const dataDir = path.join(parent, "not-a-directory");
   await writeFile(dataDir, "blocker", "utf8");
   try {
@@ -209,4 +211,3 @@ test("requires an existing user before modifying Hunts", async () => {
     ).rejects.toBeInstanceOf(UserNotFoundError);
   });
 });
-

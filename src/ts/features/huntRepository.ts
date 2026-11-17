@@ -14,7 +14,7 @@ export interface CreatorIdentity {
 }
 let creatorSession: Promise<OperationResult<CreatorIdentity>> | undefined;
 let creatorSessionToken: string | null | undefined;
-const PLAYER_SESSION_KEY = "buchunt.player-session";
+const PLAYER_SESSION_KEY = "townseeker.player-session";
 function storedGoogleToken(): string | null {
   try {
     const session = JSON.parse(

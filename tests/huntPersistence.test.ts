@@ -29,7 +29,7 @@ const input = {
 const task = {
   displayLabel: "Fountain",
   description: "Read the plaque",
-  requiredAnswer: "Bucky",
+  requiredAnswer: "Explorer",
   location: { latitude: 36, longitude: -82 },
   order: 1,
   answerCaseSensitive: false,
@@ -37,7 +37,7 @@ const task = {
   points: 0,
 };
 test("JSON survives fresh storage instances; concurrent updates preserve every task", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-store-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-store-"));
   try {
     const path = join(directory, "hunts.json");
     const store = new HuntStore(path);
@@ -109,7 +109,7 @@ test("JSON survives fresh storage instances; concurrent updates preserve every t
 });
 
 test("organization IDs persist on hunts and legacy names migrate only when uniquely resolved", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-org-link-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-org-link-"));
   try {
     const store = new HuntStore(join(directory, "hunts.json"));
     const legacy = await store.create(
@@ -134,7 +134,7 @@ test("organization IDs persist on hunts and legacy names migrate only when uniqu
 });
 
 test("multiple-choice answers persist rejected choices per account and complete only on the configured answer", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-multiple-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-multiple-"));
   const store = new HuntStore(join(directory, "hunts.json"));
   const hunt = await store.create(input, "owner");
   const saved = await store.addTask(hunt.id, {
@@ -146,7 +146,7 @@ test("multiple-choice answers persist rejected choices per account and complete 
   const nextTask = await store.addTask(hunt.id, {
     ...task,
     displayLabel: "Library",
-    requiredAnswer: "Bucky",
+    requiredAnswer: "Explorer",
     order: 2,
   });
   expect(
@@ -179,7 +179,7 @@ test("multiple-choice answers persist rejected choices per account and complete 
     );
     const displayed = (await (await call(route)).json()).value.tasks[0];
     expect((await (await call(route)).json()).value.tasks).toHaveLength(1);
-    expect((await call(nextAnswer, { answer: "Bucky" })).status).toBe(400);
+    expect((await call(nextAnswer, { answer: "Explorer" })).status).toBe(400);
     expect(displayed.choices).toEqual([
       "Circle",
       "Octagon",
@@ -216,7 +216,7 @@ test("multiple-choice answers persist rejected choices per account and complete 
     expect(advanced).toHaveLength(2);
     expect(advanced[0].completed).toBe(true);
     expect(advanced[1]).toMatchObject({ id: nextTask.id, completed: false });
-    expect((await call(nextAnswer, { answer: "Bucky" })).status).toBe(200);
+    expect((await call(nextAnswer, { answer: "Explorer" })).status).toBe(200);
     expect((await (await call(route)).json()).value.tasks[1].completed).toBe(
       true,
     );
@@ -227,7 +227,7 @@ test("multiple-choice answers persist rejected choices per account and complete 
 });
 
 test("corrupt or unsupported stores are preserved and write failures reject", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-failure-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-failure-"));
   try {
     const path = join(directory, "hunts.json");
     for (const content of ["{broken", '{"schemaVersion":2,"hunts":[]}']) {
@@ -251,7 +251,7 @@ test("corrupt or unsupported stores are preserved and write failures reject", as
 });
 
 test("player profiles persist separately by Google account", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-profile-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-profile-"));
   const accountA = `google-${"a".repeat(64)}`;
   const accountB = `google-${"b".repeat(64)}`;
   try {
@@ -267,7 +267,9 @@ test("player profiles persist separately by Google account", async () => {
 });
 
 test("verified Baja account migrates legacy hunt ownership and keeps new hunts account-linked", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-owner-migration-"));
+  const directory = await mkdtemp(
+    join(tmpdir(), "townseeker-owner-migration-"),
+  );
   const hunts = new HuntStore(join(directory, "hunts.json"));
   const legacyOwnerA = `browser:${"a".repeat(64)}`;
   const legacyOwnerB = `browser:${"b".repeat(64)}`;
@@ -340,7 +342,7 @@ test("verified Baja account migrates legacy hunt ownership and keeps new hunts a
 });
 
 test("Google hunt owners cannot invite their own email as a collaborator", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-self-invite-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-self-invite-"));
   const app = createApplication({
     dataDirectory: directory,
     verifyGoogleIdentity: async (token) => ({
@@ -391,7 +393,7 @@ test("Google hunt owners cannot invite their own email as a collaborator", async
 });
 
 test("creator ownership, contributor grants, privacy and restart persistence", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-api-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-api-"));
   let app = createApplication({ dataDirectory: directory });
   async function start() {
     await new Promise<void>((resolve) => app.listen(0, "127.0.0.1", resolve));
@@ -487,7 +489,7 @@ test("creator ownership, contributor grants, privacy and restart persistence", a
     for (const cookie of [
       stranger.cookie,
       collaborator.cookie,
-      "buchunt-creator=" + owner.id.slice(8),
+      "townseeker-creator=" + owner.id.slice(8),
     ]) {
       expect(
         (await fetch(base + route, { headers: headers(cookie) })).status,
@@ -784,7 +786,7 @@ test("creator ownership, contributor grants, privacy and restart persistence", a
     const playerCookie = player.headers.get("set-cookie")!.split(";")[0];
     const projection = await player.json();
     expect(projection.value.tasks[0].completed).toBe(false);
-    expect(JSON.stringify(projection)).not.toContain("Bucky");
+    expect(JSON.stringify(projection)).not.toContain("Explorer");
     expect(JSON.stringify(projection)).not.toContain("ownerId");
     const answerPath = `/api/player/hunts/${id}/tasks/${saved.value.id}/answer`;
     expect(
@@ -792,7 +794,7 @@ test("creator ownership, contributor grants, privacy and restart persistence", a
         await fetch(base + answerPath, {
           method: "POST",
           headers: headers(playerCookie),
-          body: '{"answer":"bucky"}',
+          body: '{"answer":"explorer"}',
         })
       ).status,
     ).toBe(400);
@@ -890,7 +892,7 @@ test("origin protection is infrastructure-only and needs no creator API token", 
 });
 
 test("ownership and contributor grants survive terminating the Node process", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-process-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-process-"));
   let child: ChildProcess | undefined;
   async function start(): Promise<string> {
     const moduleUrl = pathToFileURL(resolve("src/js/server/server.js")).href;
@@ -977,7 +979,7 @@ const verifyPlayerToken = async (token: string): Promise<string> => {
 };
 
 test("account task progress survives restart without cookies and isolates players", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-account-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-account-"));
   const store = new HuntStore(join(directory, "hunts.json"));
   const hunt = await store.create(input, "owner");
   const first = await store.addTask(hunt.id, task);
@@ -1018,7 +1020,7 @@ test("account task progress survives restart without cookies and isolates player
           "/hunts",
           undefined,
           undefined,
-          "buchunt-player=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          "townseeker-player=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
         )
       ).status,
     ).toBe(401);
@@ -1035,18 +1037,18 @@ test("account task progress survives restart without cookies and isolates player
     ).toEqual([false]);
     expect(opened.payload.value.tasks[0].description).toBe(task.description);
     expect(JSON.stringify(opened.payload)).not.toMatch(
-      /Bucky|ownerId|requiredAnswer/,
+      /Explorer|ownerId|requiredAnswer/,
     );
     expect((await call("/hunts", "player-a")).payload.value).toHaveLength(1);
     const answerPath = `/hunts/${hunt.id}/tasks/${first.id}/answer`;
     expect(
-      (await call(answerPath, undefined, { answer: "Bucky" })).status,
+      (await call(answerPath, undefined, { answer: "Explorer" })).status,
     ).toBe(401);
     expect(
       (await call(answerPath, "player-a", { answer: "wrong" })).status,
     ).toBe(400);
     expect(
-      (await call(answerPath, "player-a", { answer: " bucky " })).status,
+      (await call(answerPath, "player-a", { answer: " explorer " })).status,
     ).toBe(200);
     expect(
       (await call("/join", "player-a", { accessCode: hunt.accessCode })).status,
@@ -1077,14 +1079,14 @@ test("account task progress survives restart without cookies and isolates player
       join(directory, "account-player-progress.json"),
       "utf8",
     );
-    expect(bytes).not.toMatch(/player-a|player-b|Bucky/);
+    expect(bytes).not.toMatch(/player-a|player-b|Explorer/);
     await writeFile(join(directory, "account-player-progress.json"), "{broken");
     const failure = await call("/hunts", "player-a");
     expect(failure.status).toBe(500);
     expect(failure.payload.code).toBe("storage");
     expect(failure.payload.value).toBeUndefined();
     expect(
-      (await call(answerPath, "player-a", { answer: "bucky" })).status,
+      (await call(answerPath, "player-a", { answer: "explorer" })).status,
     ).toBe(500);
     expect(
       await readFile(join(directory, "account-player-progress.json"), "utf8"),
@@ -1096,7 +1098,7 @@ test("account task progress survives restart without cookies and isolates player
 });
 
 test("leaving and rejoining a sequential hunt restores completion and next task", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-rejoin-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-rejoin-"));
   const store = new HuntStore(join(directory, "hunts.json"));
   const hunt = await store.create(input, "owner");
   const first = await store.addTask(hunt.id, task);
@@ -1208,7 +1210,7 @@ test("leaving and rejoining a sequential hunt restores completion and next task"
 });
 
 test("saved progress for departed accounts stays restorable but is omitted from active participants", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-left-results-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-left-results-"));
   try {
     const store = new PlayerProgressStore(
       join(directory, "account-player-progress.json"),
@@ -1238,7 +1240,7 @@ test("saved progress for departed accounts stays restorable but is omitted from 
 
 test("hunt participation progress is current, task-specific, and restricted to Owners and Officers", async () => {
   const directory = await mkdtemp(
-    join(tmpdir(), "buchunt-participant-progress-"),
+    join(tmpdir(), "townseeker-participant-progress-"),
   );
   const app = createApplication({
     dataDirectory: directory,
@@ -1440,7 +1442,7 @@ test("hunt participation progress is current, task-specific, and restricted to O
 });
 
 test("hunt deletion requires the owner and clears related saved records", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-delete-hunt-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-delete-hunt-"));
   const app = createApplication({ dataDirectory: directory });
   try {
     await new Promise<void>((resolve) => app.listen(0, "127.0.0.1", resolve));
@@ -1490,7 +1492,7 @@ test("hunt deletion requires the owner and clears related saved records", async 
 });
 
 test("accepted email invitations retain the verified account email and default to Contributor", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-hunt-roles-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-hunt-roles-"));
   try {
     const contributors = new ContributorStore(
       join(directory, "hunt-contributors.json"),
@@ -1531,7 +1533,7 @@ test("accepted email invitations retain the verified account email and default t
 test("account browser answers tasks and restores progress in another browser", async ({
   browser,
 }) => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-account-ui-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-account-ui-"));
   const store = new HuntStore(join(directory, "hunts.json"));
   const hunt = await store.create(input, "owner");
   await store.addTask(hunt.id, task);
@@ -1552,7 +1554,7 @@ test("account browser answers tasks and restores progress in another browser", a
       await context.addInitScript(
         ({ token }) => {
           sessionStorage.setItem(
-            "buchunt.player-session",
+            "townseeker.player-session",
             JSON.stringify({
               provider: "google",
               accountId: "google-subject-a",
@@ -1561,7 +1563,7 @@ test("account browser answers tasks and restores progress in another browser", a
             }),
           );
           localStorage.setItem(
-            "buchunt.player-profile.google-subject-a",
+            "townseeker.player-profile.google-subject-a",
             "Baja",
           );
         },
@@ -1593,7 +1595,7 @@ test("account browser answers tasks and restores progress in another browser", a
           input.name,
         );
         await expect(page.getByLabel("Access code")).toHaveValue("");
-        await page.getByLabel("Answer for Fountain").fill("bucky");
+        await page.getByLabel("Answer for Fountain").fill("explorer");
         await page
           .getByRole("button", { name: "Submit answer" })
           .first()
@@ -1632,7 +1634,7 @@ test("account browser answers tasks and restores progress in another browser", a
 });
 
 test("account progress reads and completion report storage failures without claiming success", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-account-write-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-account-write-"));
   const store = new HuntStore(join(directory, "hunts.json"));
   const hunt = await store.create(input, "owner");
   const savedTask = await store.addTask(hunt.id, task);
@@ -1666,7 +1668,7 @@ test("account progress reads and completion report storage failures without clai
     await mkdir(progressPath);
     const failedAnswer = await post(
       `/hunts/${hunt.id}/tasks/${savedTask.id}/answer`,
-      { answer: "Bucky" },
+      { answer: "Explorer" },
     );
     expect(failedAnswer.status).toBe(500);
     expect((await failedAnswer.json()).ok).toBe(false);
@@ -1686,7 +1688,7 @@ test("account progress reads and completion report storage failures without clai
 });
 
 test("access code joins persist before answers and reject unavailable hunts and bypasses", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-join-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-join-"));
   const store = new HuntStore(join(directory, "hunts.json"));
   const hunt = await store.create(
     { ...input, beginsAt: "2020-01-01T00:00:00Z" },
@@ -1882,16 +1884,16 @@ test("access code joins persist before answers and reject unavailable hunts and 
 });
 
 test("organization survives creation, edits, and reopening storage", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-org-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-org-"));
   try {
     const path = join(directory, "hunts.json");
     const store = new HuntStore(path);
     const hunt = await store.create(
-      { ...input, organizationName: "ETSU" },
+      { ...input, organizationName: "DBSBSG" },
       "owner",
     );
     expect((await new HuntStore(path).get(hunt.id)).organizationName).toBe(
-      "ETSU",
+      "DBSBSG",
     );
     await store.updateSettings(hunt.id, { organizationName: "Computing" });
     expect((await new HuntStore(path).get(hunt.id)).organizationName).toBe(

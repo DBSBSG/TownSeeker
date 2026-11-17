@@ -76,12 +76,18 @@ function isObject(value) {
 function hasExactFields(value, fields, prefix, issues) {
   for (const field of fields) {
     if (!Object.hasOwn(value, field)) {
-      issues.push({ field: prefix + field, message: "Required field is missing." });
+      issues.push({
+        field: prefix + field,
+        message: "Required field is missing.",
+      });
     }
   }
   for (const field of Object.keys(value)) {
     if (!fields.includes(field)) {
-      issues.push({ field: prefix + field, message: "Unknown field is not allowed." });
+      issues.push({
+        field: prefix + field,
+        message: "Unknown field is not allowed.",
+      });
     }
   }
 }
@@ -99,7 +105,8 @@ function timestamp(value) {
       value,
     );
   if (!match) return undefined;
-  const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText] =
+    match;
   const year = Number(yearText);
   const month = Number(monthText);
   const day = Number(dayText);
@@ -133,7 +140,10 @@ function checkTimestamp(value, field, issues) {
 
 function validateTask(value, prefix, ids, orders, issues) {
   if (!isObject(value)) {
-    issues.push({ field: prefix.slice(0, -1), message: "Task must be an object." });
+    issues.push({
+      field: prefix.slice(0, -1),
+      message: "Task must be an object.",
+    });
     return;
   }
   hasExactFields(value, TASK_FIELDS, prefix, issues);
@@ -142,7 +152,10 @@ function validateTask(value, prefix, ids, orders, issues) {
   }
   if (typeof value.id === "string") {
     if (ids.has(value.id)) {
-      issues.push({ field: prefix + "id", message: "Task IDs must be unique within a Hunt." });
+      issues.push({
+        field: prefix + "id",
+        message: "Task IDs must be unique within a Hunt.",
+      });
     }
     ids.add(value.id);
   }
@@ -153,9 +166,16 @@ function validateTask(value, prefix, ids, orders, issues) {
       message: "Must be a boolean.",
     });
   }
-  for (const [field, minimum] of [["order", 1], ["points", 0]]) {
+  for (const [field, minimum] of [
+    ["order", 1],
+    ["points", 0],
+  ]) {
     const number = value[field];
-    if (typeof number !== "number" || !Number.isInteger(number) || number < minimum) {
+    if (
+      typeof number !== "number" ||
+      !Number.isInteger(number) ||
+      number < minimum
+    ) {
       issues.push({
         field: prefix + field,
         message: "Must be an integer of at least " + minimum + ".",
@@ -178,8 +198,16 @@ function validateTask(value, prefix, ids, orders, issues) {
     });
     return;
   }
-  hasExactFields(value.location, ["latitude", "longitude"], prefix + "location.", issues);
-  for (const [field, limit] of [["latitude", 90], ["longitude", 180]]) {
+  hasExactFields(
+    value.location,
+    ["latitude", "longitude"],
+    prefix + "location.",
+    issues,
+  );
+  for (const [field, limit] of [
+    ["latitude", 90],
+    ["longitude", 180],
+  ]) {
     const coordinate = value.location[field];
     if (
       typeof coordinate !== "number" ||
@@ -188,7 +216,8 @@ function validateTask(value, prefix, ids, orders, issues) {
     ) {
       issues.push({
         field: prefix + "location." + field,
-        message: "Must be a finite number between -" + limit + " and " + limit + ".",
+        message:
+          "Must be a finite number between -" + limit + " and " + limit + ".",
       });
     }
   }
@@ -196,7 +225,10 @@ function validateTask(value, prefix, ids, orders, issues) {
 
 function validateHunt(value, accountId, prefix, issues, ids) {
   if (!isObject(value)) {
-    issues.push({ field: prefix.slice(0, -1), message: "Hunt must be an object." });
+    issues.push({
+      field: prefix.slice(0, -1),
+      message: "Hunt must be an object.",
+    });
     return;
   }
   hasExactFields(value, HUNT_FIELDS, prefix, issues);
@@ -211,7 +243,10 @@ function validateHunt(value, accountId, prefix, issues, ids) {
   }
   if (typeof value.id === "string") {
     if (ids.has(value.id)) {
-      issues.push({ field: prefix + "id", message: "Hunt IDs must be unique per account." });
+      issues.push({
+        field: prefix + "id",
+        message: "Hunt IDs must be unique per account.",
+      });
     }
     ids.add(value.id);
   }
@@ -228,22 +263,37 @@ function validateHunt(value, accountId, prefix, issues, ids) {
     });
   }
   if (value.accessCode !== null) {
-    issues.push({ field: prefix + "accessCode", message: "Must be null until access codes are implemented." });
+    issues.push({
+      field: prefix + "accessCode",
+      message: "Must be null until access codes are implemented.",
+    });
   }
   const beginsAt = checkTimestamp(value.beginsAt, prefix + "beginsAt", issues);
   const endsAt =
     value.endsAt === null
       ? undefined
       : checkTimestamp(value.endsAt, prefix + "endsAt", issues);
-  const createdAt = checkTimestamp(value.createdAt, prefix + "createdAt", issues);
-  const updatedAt = checkTimestamp(value.updatedAt, prefix + "updatedAt", issues);
+  const createdAt = checkTimestamp(
+    value.createdAt,
+    prefix + "createdAt",
+    issues,
+  );
+  const updatedAt = checkTimestamp(
+    value.updatedAt,
+    prefix + "updatedAt",
+    issues,
+  );
   if (beginsAt !== undefined && endsAt !== undefined && endsAt <= beginsAt) {
     issues.push({
       field: prefix + "endsAt",
       message: "Must be later than beginsAt.",
     });
   }
-  if (createdAt !== undefined && updatedAt !== undefined && updatedAt < createdAt) {
+  if (
+    createdAt !== undefined &&
+    updatedAt !== undefined &&
+    updatedAt < createdAt
+  ) {
     issues.push({
       field: prefix + "updatedAt",
       message: "Must not precede createdAt.",
@@ -256,7 +306,13 @@ function validateHunt(value, accountId, prefix, issues, ids) {
   const taskIds = new Set();
   const orders = new Set();
   for (let index = 0; index < value.tasks.length; index++) {
-    validateTask(value.tasks[index], prefix + "tasks[" + index + "].", taskIds, orders, issues);
+    validateTask(
+      value.tasks[index],
+      prefix + "tasks[" + index + "].",
+      taskIds,
+      orders,
+      issues,
+    );
   }
 }
 
@@ -298,7 +354,11 @@ function validateUserData(value, accountId) {
       "profile.updatedAt",
       issues,
     );
-    if (createdAt !== undefined && updatedAt !== undefined && updatedAt < createdAt) {
+    if (
+      createdAt !== undefined &&
+      updatedAt !== undefined &&
+      updatedAt < createdAt
+    ) {
       issues.push({
         field: "profile.updatedAt",
         message: "Must not precede profile.createdAt.",
@@ -392,7 +452,7 @@ async function writeAtomically(filePath, data, exclusive) {
 }
 
 export function createUserStore({
-  dataDir = process.env.BUCHUNT_DATA_DIR || path.resolve("var/data"),
+  dataDir = process.env.TOWNSEEKER_DATA_DIR || path.resolve("var/data"),
   clock = () => new Date(),
   idGenerator = randomUUID,
 } = {}) {
@@ -410,7 +470,10 @@ export function createUserStore({
     const value = clock();
     const date = value instanceof Date ? value : new Date(value);
     if (!Number.isFinite(date.getTime())) {
-      throw new UserStoreError("The store clock returned an invalid time.", "storage");
+      throw new UserStoreError(
+        "The store clock returned an invalid time.",
+        "storage",
+      );
     }
     return date.toISOString();
   }
@@ -573,7 +636,10 @@ export function createUserStore({
       return serialize(accountId, async () => {
         const value = await requireUser(accountId);
         if (value.hunts.some((existing) => existing.id === hunt.id)) {
-          throw new UserStoreError("The generated Hunt ID already exists.", "storage");
+          throw new UserStoreError(
+            "The generated Hunt ID already exists.",
+            "storage",
+          );
         }
         value.hunts.push(hunt);
         value.profile.updatedAt = timestampNow;
@@ -634,4 +700,3 @@ export function createUserStore({
     },
   };
 }
-

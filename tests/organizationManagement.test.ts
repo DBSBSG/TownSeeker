@@ -12,7 +12,7 @@ function accountId(subject: string): string {
 }
 
 test("organization membership, roles, invitations, and saved data are protected", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-organizations-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-organizations-"));
   const app = createApplication({
     dataDirectory: directory,
     verifyPlayerToken: async (token) => token,

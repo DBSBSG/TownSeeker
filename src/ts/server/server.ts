@@ -29,6 +29,8 @@ import { HuntIssueStore } from "./huntIssueStore.js";
 import { PlayerProgressStore } from "./playerProgressStore.js";
 import { PlayerProfileStore } from "./playerProfileStore.js";
 import { OrganizationStore } from "./organizationStore.js";
+import { createAdminHandler } from "./auth.js";
+import { FileSessionStore } from "./authSessionStore.js";
 import {
   buildHuntResults,
   resultsCsv,
@@ -40,6 +42,9 @@ interface ServerOptions {
   staticDirectory?: string;
   originToken?: string;
   googleClientId?: string;
+  appOrigin?: string;
+  adminEmails?: string[];
+  verifyAuthCredential?: Parameters<typeof createAdminHandler>[2];
   // Tests inject the identity verifier; production always uses Google's verifier.
   verifyPlayerToken?: (token: string) => Promise<string>;
   verifyGoogleIdentity?: (token: string) => Promise<{
@@ -143,7 +148,23 @@ function rejectFutureTask(
 }
 export function createApplication(options: ServerOptions = {}) {
   const directory = resolve(options.dataDirectory ?? "data");
+  const auth = createAdminHandler(
+    {
+      clientId: options.googleClientId ?? "",
+      origin: options.appOrigin ?? "",
+      adminEmails: options.adminEmails ?? [],
+    },
+    new FileSessionStore(resolve(directory, "auth-sessions.json")),
+    options.verifyAuthCredential,
+  );
   const staticDirectory = resolve(options.staticDirectory ?? "src");
+  if (
+    directory === staticDirectory ||
+    directory.startsWith(staticDirectory + sep)
+  )
+    throw new Error(
+      "DATA_DIRECTORY must be outside the public static directory.",
+    );
   const kahoot = new KahootStore(resolve(directory, "kahoot-games.json"));
   const issueReports = new HuntIssueStore(
     resolve(directory, "hunt-issues.json"),
@@ -384,6 +405,34 @@ export function createApplication(options: ServerOptions = {}) {
       const url = new URL(request.url ?? "/", "http://localhost");
       const path = decodeURIComponent(url.pathname);
       const method = request.method ?? "GET";
+      if (path.startsWith("/api/auth/") || path === "/api/admin/capabilities") {
+        const chunks: Buffer[] = [];
+        let size = 0;
+        for await (const chunk of request) {
+          size += chunk.length;
+          if (size <= 16384) chunks.push(chunk);
+        }
+        const result = await auth({
+          rawPath: path,
+          requestContext: { http: { method } },
+          headers: Object.fromEntries(
+            Object.entries(request.headers).map(([key, value]) => [
+              key,
+              Array.isArray(value) ? value.join("; ") : value,
+            ]),
+          ),
+          body:
+            size > 16384
+              ? " ".repeat(16385)
+              : Buffer.concat(chunks).toString("utf8"),
+        });
+        response.writeHead(result.statusCode, {
+          ...result.headers,
+          ...(result.cookies.length ? { "Set-Cookie": result.cookies } : {}),
+        });
+        response.end(result.body);
+        return;
+      }
       if (path === "/api/health" && method === "GET") {
         json(response, 200, { ok: true, value: { status: "ready" } });
         return;
@@ -859,7 +908,7 @@ export function createApplication(options: ServerOptions = {}) {
           });
           return;
         }
-        let secret = /(?:^|;\s*)buchunt-creator=([a-f0-9]{64})(?:;|$)/.exec(
+        let secret = /(?:^|;\s*)townseeker-creator=([a-f0-9]{64})(?:;|$)/.exec(
           request.headers.cookie ?? "",
         )?.[1];
         const account = await googleCreator(request);
@@ -883,7 +932,7 @@ export function createApplication(options: ServerOptions = {}) {
           secret ??= randomBytes(32).toString("hex");
           response.setHeader(
             "Set-Cookie",
-            `buchunt-creator=${secret}; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
+            `townseeker-creator=${secret}; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
           );
           json(response, 200, {
             ok: true,
@@ -1737,14 +1786,14 @@ export function createApplication(options: ServerOptions = {}) {
           return;
         }
         const cookies = request.headers.cookie ?? "";
-        let player = /(?:^|;\s*)buchunt-player=([a-f0-9-]{36})(?:;|$)/.exec(
+        let player = /(?:^|;\s*)townseeker-player=([a-f0-9-]{36})(?:;|$)/.exec(
           cookies,
         )?.[1];
         if (!player) {
           player = randomUUID();
           response.setHeader(
             "Set-Cookie",
-            `buchunt-player=${player}; Path=/api/player; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
+            `townseeker-player=${player}; Path=/api/player; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
           );
         }
         const hunt = await hunts.get(match[1]);
@@ -1906,8 +1955,10 @@ if (
     dataDirectory: process.env.DATA_DIRECTORY,
     originToken: process.env.ORIGIN_TOKEN,
     googleClientId: process.env.GOOGLE_CLIENT_ID,
+    appOrigin: process.env.APP_ORIGIN ?? process.env.ADMIN_ORIGIN,
+    adminEmails: (process.env.ADMIN_EMAILS ?? "").split(","),
   });
   app.listen(Number(process.env.PORT ?? 3000), host, () =>
-    console.log("BucHunt server ready"),
+    console.log("TownSeeker server ready"),
   );
 }

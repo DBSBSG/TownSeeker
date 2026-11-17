@@ -29,7 +29,7 @@ const input = {
 const taskInput = {
   displayLabel: "Library",
   description: "Find the library",
-  requiredAnswer: "Bucky",
+  requiredAnswer: "Explorer",
   location: { latitude: 36, longitude: -82 },
   order: 1,
   answerCaseSensitive: false,
@@ -144,7 +144,7 @@ test("PDF paginates many players and tasks without dropping long or Unicode cont
 });
 
 test("exports enforce owner access, include both stores, and never alter saved player data", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-export-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-export-"));
   const hunts = new HuntStore(join(directory, "hunts.json"));
   const hunt = await hunts.create(input, accountId("owner"));
   const first = await hunts.addTask(hunt.id, taskInput);

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BucHunt Hunt Configuration",
+  "title": "TownSeeker Hunt Configuration",
   "description": "Private Hunt configuration. Tasks belong to their containing Hunt; participant progress is stored separately.",
   "type": "object",
   "additionalProperties": false,

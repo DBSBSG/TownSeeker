@@ -97,7 +97,7 @@ Open `http://127.0.0.1:3000/admin.html` (Hunt Studio) and sign in with Google. T
 
 Google-authenticated requests send the ID token to the server, which validates it and derives the creator ID as `google-<SHA-256 of Google subject>`. The email is used only for the one-time migration gate and is not stored in hunt ownership. Existing browser-cookie sessions remain temporarily supported for compatibility. When a verified `codepro1012@gmail.com` account opens Hunt Studio, all hunt owners using legacy `browser:<hash>` IDs in that deployment are reassigned to that account. Hunt IDs, tasks, access codes, and player progress are preserved. The operation is idempotent and does not reassign new Google-owned hunts. Each deployment stores its JSON separately, so sign in to each deployment that needs migration.
 
-To collaborate, the hunt owner enters the contributor's Google email under **Contributors**. The private `hunt-contributors.json` store keeps pending invitations separately from active account IDs, for example `{ "schemaVersion": 1, "contributors": { "<hunt-id>": ["google-<account-hash>"] }, "invitations": { "<hunt-id>": ["person@example.com"] } }`. When that person signs in, the server compares the verified Google email, converts matching invitations to stable account IDs, and removes the pending email. Email addresses remain in this private file only while invitations are pending. BucHunt does not send invitation emails, so the owner must share the site link. Only the owner can invite, cancel, or remove collaborators. The server enforces access on each request; hiding or altering controls in the browser cannot bypass it. Membership persists across application restarts and removal revokes subsequent access immediately.
+To collaborate, the hunt owner enters the contributor's Google email under **Contributors**. The private `hunt-contributors.json` store keeps pending invitations separately from active account IDs, for example `{ "schemaVersion": 1, "contributors": { "<hunt-id>": ["google-<account-hash>"] }, "invitations": { "<hunt-id>": ["person@example.com"] } }`. When that person signs in, the server compares the verified Google email, converts matching invitations to stable account IDs, and removes the pending email. Email addresses remain in this private file only while invitations are pending. TownSeeker does not send invitation emails, so the owner must share the site link. Only the owner can invite, cancel, or remove collaborators. The server enforces access on each request; hiding or altering controls in the browser cannot bypass it. Membership persists across application restarts and removal revokes subsequent access immediately.
 
 The Baja Blast migration runs lazily on each environment's first authenticated Hunt Studio session by the named account. It only changes legacy browser owner IDs, never hunt content. Other Google-owned hunts remain with their existing accounts.
 
@@ -125,32 +125,34 @@ Creator requests use the verified Google ID token when present; legacy browser-c
 
 ### Deployment and verification
 
-The former S3-only deployment could not write a server-side JSON file. The revised stack keeps a private versioned S3 bucket for release archives and runs the Node application as an unprivileged systemd service on one Amazon Linux 2023 EC2 instance. CloudFront provides HTTPS, forwards API methods/cookies without caching, and sends a private origin token. The origin security group accepts port 3000 only from CloudFront's managed prefix list. The private CloudFront origin token is generated in Secrets Manager, loaded into a root-readable environment file as `ORIGIN_TOKEN`, and never included in release archives. It protects the infrastructure origin only and grants no hunt ownership or editing privileges. The historical CloudFormation logical resource name `AdminSecret` is retained to avoid replacing the existing secret; its output is now named `OriginSecretArn`. Creators and browser tests do not read it. The deployment selects the namespaced `node-22` executable described in the [Amazon Linux documentation](https://docs.aws.amazon.com/linux/al2023/ug/nodejs.html).
+TownSeeker is maintained by DBSBSG and runs as a Node.js application on Hostinger.
+The deployment workflow in `.github/workflows/deploy.yml` runs lint, formatting,
+TypeScript, authentication tests, and the browser suite before deploying `main`.
+PRs are checked without creating cloud preview environments. Closing a PR only
+clears retired preview labels.
 
-Runtime JSON is under `/var/lib/buchunt` on encrypted EBS, outside release directories. Application deployment replaces a code symlink and restarts systemd without replacing configuration. Application and instance restarts preserve data. **Instance replacement is a recovery operation:** the root volume is retained on termination, but a replacement instance does not automatically attach the old data. Snapshot/restore `/var/lib/buchunt` before replacing an instance or changing its AMI/network. Retained volumes continue to incur storage charges after a stack/PR environment is destroyed; the existing destroy workflow deletes the stack and artifact bucket, not retained volumes. Backups and old-release retention are operator responsibilities.
+Configure deployment credentials and runtime settings as described in the
+[README](../README.md). `deploy/deploy.sh` submits a managed Node.js build through
+Hostinger's API and reports the deployed URL. It does not provision AWS resources,
+copy data, or run a static FTP upload. The old infrastructure and destroy scripts
+are retained as legacy references, not as current setup instructions.
 
-The deploy script accepts an existing public `VPC_ID` and `SUBNET_ID`, or discovers a public subnet in the default VPC. The VPC must have DNS hostnames enabled and the subnet must have outbound internet access. The deployment role needs CloudFormation, S3, CloudFront, EC2/prefix-list discovery, SSM command/status, Secrets Manager, and IAM role/profile creation and pass-role permissions for these stack resources. The prior static-only role may need those permissions added by the AWS administrator. There are EC2/EBS/Secrets Manager costs in addition to the prior static hosting costs.
+All runtime JSON belongs in a private, persistent `DATA_DIRECTORY`, outside
+`public_html`, build directories, and the static `src` directory. Restrict its
+permissions and back it up. One Node.js process owns a data directory; replicas
+need a transactional storage design first. A local process restart preserves data,
+but an actual Hostinger redeployment/restore must be verified before launch.
 
-```sh
-bash deploy/deploy.sh bucstop-stage
-```
+Post-deployment smoke checks use real HTTP requests to verify pages, assets,
+Google client configuration, secure nonce cookies, and unauthenticated access
+controls. They do not create test hunts or accounts in production. A successful
+real Google login, end-to-end hunt completion, and persistent data across an actual
+redeployment are separate release checks.
 
-The delivery workflow first requires build, lint, formatting, and all automated tests to pass. It then deploys and runs the actual administration/player browser workflow against the HTTPS output URL; any failure fails the delivery job. Deployment traces remain disabled for privacy; no creator token retrieval is part of deployment verification. Verification creates a small dedicated test hunt in each deployed environment. No production data is used for tests. Tests use temporary stores locally and never overwrite tracked `data/hunts.json`.
-
-`pnpm test` covers definition validation, restart persistence, failed writes, corrupt stores, concurrent task saves, owner/contributor authorization, grant/revoke persistence, public-ID impersonation rejection, answer privacy, player isolation, navigation, and the create-hunt/add-task/reload/answer workflow. Before merging into `stage`, obtain the team's two peer reviews and confirm the deployment job passes. A locally passing build alone does not satisfy the Definition of Done.
-
-### Review findings against requested issues
-
-| Issue | Finding on stage                                      | Integrated change                                                                           |
-| ----- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| #31   | Disabled form and mount placeholder                   | Working creation, validation feedback, generated hunt ID and player link                    |
-| #32   | Task form called an unimplemented repository          | Live save, retrieval, next-order selection, and reload support                              |
-| #34   | JSON format existed without runtime persistence       | Validated atomic writes, serialized mutations, restart-safe reads and error reporting       |
-| #38   | Player mount placeholder                              | Task labels, descriptions, incomplete/completed states and per-browser persisted completion |
-| #33   | Validator existed without save integration            | Server validates every complete hunt before writing                                         |
-| #36   | Static-only delivery without application verification | Writable runtime, required quality checks and deployed browser verification                 |
-
-The homepage and `Documentation/sprint_2_foundation.md` still describe the earlier skeleton because they were outside the authorized edit list. Their navigation remains usable; the administration and player pages describe the implemented behavior.
+`pnpm test` covers hunt/task validation, persistence and corrupt-store handling,
+concurrent writes, owner/contributor/organization permissions, admission controls,
+answer privacy, player isolation, navigation, and exports. Tests use temporary
+stores and do not overwrite tracked `data/hunts.json`.
 
 ## Google-account task progress (#40)
 
@@ -165,12 +167,10 @@ The backend verifies Google's signature, issuer, audience, expiry, verified emai
 and authorized party through `google-auth-library`. It derives the storage key
 from the verified Google subject, rather than trusting an account ID or email
 submitted by the browser. Set `GOOGLE_CLIENT_ID` to the same client ID used by the
-existing sign-in integration. The deployment script supplies it to EC2 and
-packages the existing authentication runtime dependencies. No additional AWS
-service or IAM permission is needed.
+existing sign-in integration. Configure it in Hostinger runtime settings; the Node.js application uses the existing authentication library. No AWS service or IAM permission is required.
 
 Task completion is stored in the private
-`DATA_DIRECTORY/account-player-progress.json` (`/var/lib/buchunt` on AWS):
+`DATA_DIRECTORY/account-player-progress.json`:
 
 ```json
 {
@@ -211,17 +211,13 @@ login restores only its cookie session, the player page offers Google
 reauthentication without using those cookies for progress. Tokens are held in
 `sessionStorage`; display names remain browser-local preferences.
 
-Access-code generation, validation, joining, participation management, publication,
-and availability rules are outside this change and are owned by the teammate's
-admission work. The existing reserved `accessCode: null` field and its schema are
-unchanged. Hunt-ID lookup retains the existing ability to read tasks and submit
-answers; admission checks can be integrated at the account route boundary later.
+Access-code joining, hunt availability, organization membership, and participation limits are enforced by the account APIs. See Participation controls below.
 
 Tests cover durable completion, restart recovery, fresh browser contexts,
 account isolation, incomplete-task preservation, invalid tokens, reauthentication,
 storage failures, and cookie omission. Tests inject a local identity verifier;
 production has no HTTP or environment switch to bypass Google verification.
-Live Google/AWS verification and the team's peer reviews remain required before
+Live Google/Hostinger verification and the team's peer reviews remain required before
 merge.
 
 ## Organizations

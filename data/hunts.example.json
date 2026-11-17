@@ -18,7 +18,7 @@
           "id": "example-task-001",
           "displayLabel": "First Landmark",
           "description": "What word appears on the example landmark?",
-          "requiredAnswer": "Bucs",
+          "requiredAnswer": "Trail",
           "location": {
             "latitude": 36.3,
             "longitude": -82.4

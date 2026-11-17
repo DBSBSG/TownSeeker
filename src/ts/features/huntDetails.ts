@@ -636,7 +636,7 @@ function renderHunt(hunt: HuntDefinition, role: HuntRole): void {
           '[data-testid="contributors-panel"]',
         );
         if (teamPanel) teamPanel.hidden = Boolean(result.value.organizationId);
-        document.dispatchEvent(new Event("buchunt:hunt-settings-saved"));
+        document.dispatchEvent(new Event("townseeker:hunt-settings-saved"));
       }
     };
   }
@@ -684,7 +684,7 @@ function renderHunt(hunt: HuntDefinition, role: HuntRole): void {
   )!.textContent = hunt.name;
   dialog.querySelector<HTMLElement>(
     '[data-testid="hunt-detail-description"]',
-  )!.textContent = hunt.description || "A BucHunt adventure.";
+  )!.textContent = hunt.description || "A TownSeeker adventure.";
   const idOutput = dialog.querySelector<HTMLOutputElement>(
     '[data-testid="hunt-detail-id"]',
   )!;

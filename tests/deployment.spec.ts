@@ -1,27 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { createHash, randomBytes } from "node:crypto";
-import { execFileSync } from "node:child_process";
 
-function parseAwsJson(output: string): Record<string, unknown> {
-  const trimmed = output.trim();
-  return trimmed ? JSON.parse(trimmed) : {};
-}
-
-test("AWS JSON parsing accepts empty success responses and rejects malformed output", () => {
-  expect(parseAwsJson("")).toEqual({});
-  expect(parseAwsJson("  \n")).toEqual({});
-  expect(parseAwsJson('{"Item":{"id":{"S":"nonce"}}}')).toHaveProperty("Item");
-  expect(() => parseAwsJson("not JSON")).toThrow();
-});
-
-// The deployment workflow supplies its HTTPS output as BASE_URL.
+// BASE_URL selects the deployed service; ordinary CI starts the local server.
 test.use({ baseURL: process.env.BASE_URL ?? "http://127.0.0.1:3000" });
 
 test("landing page keeps player navigation behind sign-in", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/BucHunt/);
+  await expect(page).toHaveTitle(/TownSeeker/);
   await expect(page.getByTestId("google-sign-in")).toBeAttached();
   await expect(page.getByRole("navigation")).toHaveCount(0);
 });
@@ -282,144 +268,133 @@ test("player account endpoints require bearer identity and never issue cookies",
     expect(payload.ok).toBe(false);
   }
   const response = await request.get("/api/player/account/hunts", {
-    headers: { Cookie: "buchunt-player=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" },
+    headers: {
+      Cookie: "townseeker-player=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    },
   });
   expect(response.status()).toBe(401);
   expect(response.headers()["set-cookie"]).toBeUndefined();
   expect((await response.json()).code).toBe("unauthorized");
 });
 
-test("live authentication routes persist nonces and reject invalid credentials", async ({
-  request,
-}) => {
-  test.skip(
-    !process.env.BASE_URL,
-    "Requires the deployed HTTPS authentication service.",
-  );
-  const table = process.env.AUTH_SESSION_TABLE;
-  expect(
-    table,
-    "Deployment must supply its real DynamoDB session table",
-  ).toBeTruthy();
-  const origin = new URL(process.env.BASE_URL!).origin;
-  const config = await request.get("/api/auth/config");
-  expect(config.status()).toBe(200);
-  expect(config.headers()["cache-control"]).toContain("no-store");
-  expect(config.headers()["set-cookie"]).toContain("__Host-buchunt-login=");
-  expect(config.headers()["set-cookie"]).toContain("Secure");
-  const { clientId, nonce } = await config.json();
-  expect(clientId).toBe(process.env.GOOGLE_CLIENT_ID);
-  expect(nonce).toMatch(/^[a-f0-9]{64}$/);
-  const key = {
-    id: { S: `login:${createHash("sha256").update(nonce).digest("hex")}` },
-  };
-  const readNonce = () => {
-    const output = execFileSync(
-      "aws",
-      [
-        "dynamodb",
-        "get-item",
-        "--table-name",
-        table!,
-        "--key",
-        JSON.stringify(key),
-        "--consistent-read",
-        "--output",
-        "json",
-      ],
-      { encoding: "utf8" },
-    ).trim();
-    // A successful GetItem can have no body after the nonce is consumed.
-    return parseAwsJson(output);
-  };
-  try {
-    expect(readNonce().Item).toBeTruthy();
-    const rejectedOrigin = await request.post("/api/auth/login", {
-      headers: { Origin: "https://invalid.example" },
+// These tests make real HTTP requests only: no Google mocks, database access,
+// test users, or writes to hunt/player data on the deployed service.
+// Successful Google login and data durability need separate migration QA.
+test.describe("@live-deployment Hostinger smoke checks", () => {
+  test.skip(!process.env.BASE_URL, "Requires a deployed BASE_URL.");
+
+  test("serves application pages and browser assets", async ({ request }) => {
+    for (const [path, marker] of [
+      ["/", 'data-testid="google-sign-in"'],
+      ["/admin.html", 'data-testid="admin-workspace"'],
+      ["/player.html", 'data-testid="player-name-form"'],
+    ]) {
+      const response = await request.get(path, { maxRedirects: 0 });
+      expect(response.status(), path).toBe(200);
+      expect(response.headers()["content-type"]).toContain("text/html");
+      const html = await response.text();
+      expect(html).toContain(marker);
+      // Both existing TownSeeker assets and future rebranded assets are checked
+      // from the actual page, rather than hardcoding a logo name or title.
+      const assets = Array.from(
+        html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css|svg|png))"/g),
+        (match) => new URL(match[1], response.url()),
+      ).filter((url) => url.origin === new URL(response.url()).origin);
+      expect(
+        assets.length,
+        `No application assets found on ${path}`,
+      ).toBeGreaterThan(0);
+      for (const asset of assets) {
+        const result = await request.get(asset.href, { maxRedirects: 0 });
+        expect(result.status(), asset.pathname).toBe(200);
+        expect(result.headers()["content-type"], asset.pathname).not.toContain(
+          "text/html",
+        );
+      }
+    }
+  });
+
+  test("serves configured Google identity and denies unauthenticated APIs", async ({
+    request,
+  }) => {
+    const expectedClientId = process.env.GOOGLE_CLIENT_ID;
+    expect(
+      expectedClientId,
+      "Set GOOGLE_CLIENT_ID to the new public OAuth client ID",
+    ).toBeTruthy();
+    const config = await request.get("/api/player/account/config");
+    expect(config.status()).toBe(200);
+    expect(config.headers()["cache-control"]).toContain("no-store");
+    expect(await config.json()).toEqual({
+      ok: true,
+      value: { clientId: expectedClientId },
+    });
+
+    for (const path of [
+      "/api/auth/session",
+      "/api/admin/capabilities",
+      "/api/player/account/hunts",
+    ]) {
+      for (const headers of [
+        {},
+        { Cookie: `__Host-townseeker-session=${"a".repeat(64)}` },
+      ]) {
+        const response = await request.get(path, { headers, maxRedirects: 0 });
+        expect(response.status(), path).toBe(401);
+        expect(response.headers()["content-type"]).toContain(
+          "application/json",
+        );
+        expect(response.headers()["cache-control"]).toContain("no-store");
+        const payload = await response.json();
+        expect(payload.user).toBeUndefined();
+        expect(payload.administrator).toBeUndefined();
+      }
+    }
+  });
+
+  test("issues private nonces and rejects cross-origin and invalid login", async ({
+    request,
+  }) => {
+    const origin = new URL(process.env.BASE_URL!).origin;
+    const config = await request.get("/api/auth/config");
+    expect(config.status()).toBe(200);
+    expect(config.headers()["cache-control"]).toContain("no-store");
+    const { clientId, nonce } = await config.json();
+    expect(
+      process.env.GOOGLE_CLIENT_ID,
+      "Set GOOGLE_CLIENT_ID for live checks",
+    ).toBeTruthy();
+    expect(clientId).toBe(process.env.GOOGLE_CLIENT_ID);
+    expect(nonce).toMatch(/^[a-f0-9]{64}$/);
+    const cookie = config
+      .headersArray()
+      .find(
+        (header) =>
+          header.name.toLowerCase() === "set-cookie" &&
+          header.value.startsWith("__Host-townseeker-login="),
+      )?.value;
+    expect(cookie, "The login nonce must be browser-bound").toBeTruthy();
+    expect(cookie).toMatch(/;\s*Secure(?:;|$)/i);
+    expect(cookie).toMatch(/;\s*HttpOnly(?:;|$)/i);
+    expect(cookie).toMatch(/;\s*SameSite=Strict(?:;|$)/i);
+    expect(cookie).toMatch(/;\s*Path=\/(?:;|$)/i);
+    expect(cookie).not.toMatch(/;\s*Domain=/i);
+    const headers = { Cookie: cookie!.split(";")[0] };
+    const crossOrigin = await request.post("/api/auth/login", {
+      headers: { ...headers, Origin: "https://invalid.example" },
       data: { credential: "invalid" },
     });
-    expect(rejectedOrigin.status()).toBe(403);
-    expect(readNonce().Item).toBeTruthy();
+    expect(crossOrigin.status()).toBe(403);
     const invalid = await request.post("/api/auth/login", {
-      headers: { Origin: origin },
+      headers: { ...headers, Origin: origin },
       data: { credential: "invalid" },
     });
     expect(invalid.status()).toBe(401);
-    expect(readNonce().Item).toBeUndefined();
-    const session = await request.get("/api/auth/session");
-    expect(session.status()).toBe(401);
-  } finally {
-    execFileSync("aws", [
-      "dynamodb",
-      "delete-item",
-      "--table-name",
-      table!,
-      "--key",
-      JSON.stringify(key),
-    ]);
-  }
-});
-
-test("live session fixture verifies DynamoDB reads, authorization and logout", async ({
-  request,
-}) => {
-  test.skip(
-    !process.env.BASE_URL,
-    "Requires the deployed HTTPS authentication service.",
-  );
-  const table = process.env.AUTH_SESSION_TABLE;
-  expect(table).toBeTruthy();
-  const token = randomBytes(32).toString("hex");
-  const key = {
-    id: { S: `session:${createHash("sha256").update(token).digest("hex")}` },
-  };
-  const identity = {
-    kind: "session",
-    subject: `ci-smoke-${token}`,
-    email: `ci-${token}@invalid.example`,
-    expiresAt: Math.floor(Date.now() / 1000) + 120,
-  };
-  const item = {
-    ...key,
-    data: { S: JSON.stringify(identity) },
-    expiresAt: { N: String(identity.expiresAt) },
-  };
-  const headers = { Cookie: `__Host-buchunt-session=${token}` };
-  try {
-    // This fixture tests real application-session plumbing, not Google sign-in.
-    execFileSync("aws", [
-      "dynamodb",
-      "put-item",
-      "--table-name",
-      table!,
-      "--item",
-      JSON.stringify(item),
-    ]);
-    const session = await request.get("/api/auth/session", { headers });
-    expect(session.status()).toBe(200);
-    expect((await session.json()).user).toEqual({
-      subject: identity.subject,
-      email: identity.email,
-      expiresAt: identity.expiresAt,
-      role: "user",
-    });
-    const admin = await request.get("/api/admin/capabilities", { headers });
-    expect(admin.status()).toBe(403);
-    const logout = await request.post("/api/auth/logout", {
-      headers: { ...headers, Origin: new URL(process.env.BASE_URL!).origin },
-      data: {},
-    });
-    expect(logout.status()).toBe(200);
-    const replay = await request.get("/api/auth/session", { headers });
-    expect(replay.status()).toBe(401);
-  } finally {
-    execFileSync("aws", [
-      "dynamodb",
-      "delete-item",
-      "--table-name",
-      table!,
-      "--key",
-      JSON.stringify(key),
-    ]);
-  }
+    expect(invalid.headers()["cache-control"]).toContain("no-store");
+    expect((await invalid.json()).user).toBeUndefined();
+    const fresh = await request.get("/api/auth/config");
+    expect(fresh.status()).toBe(200);
+    expect((await fresh.json()).nonce).not.toBe(nonce);
+    expect((await request.get("/api/auth/session")).status()).toBe(401);
+  });
 });
