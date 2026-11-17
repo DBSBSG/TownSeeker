@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "BucHunt Per-User Data",
+  "title": "TownSeeker Per-User Data",
   "description": "Private per-account profile and owned Hunt definitions. Store this file outside the public website directory.",
   "type": "object",
   "additionalProperties": false,
@@ -46,4 +46,3 @@
     }
   }
 }
-

@@ -5,7 +5,7 @@ test("players can leave and rejoin a hunt from the saved overview or admin link"
 }) => {
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "player@example.com",
@@ -13,7 +13,10 @@ test("players can leave and rejoin a hunt from the saved overview or admin link"
         idToken: "verified-test-token",
       }),
     );
-    localStorage.setItem("buchunt.player-profile.google-account-leave", "Baja");
+    localStorage.setItem(
+      "townseeker.player-profile.google-account-leave",
+      "Baja",
+    );
   });
   await page.route("**/api/admin/capabilities", (route) =>
     route.fulfill({
@@ -104,7 +107,7 @@ test("empty player dashboard points players to the join card above", async ({
 }) => {
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "player@example.com",
@@ -112,7 +115,10 @@ test("empty player dashboard points players to the join card above", async ({
         idToken: "verified-test-token",
       }),
     );
-    localStorage.setItem("buchunt.player-profile.google-account-empty", "Baja");
+    localStorage.setItem(
+      "townseeker.player-profile.google-account-empty",
+      "Baja",
+    );
   });
   await page.route("**/api/admin/capabilities", (route) =>
     route.fulfill({
@@ -134,7 +140,7 @@ test("empty player dashboard points players to the join card above", async ({
 test("admin join links do not fill the access-code form", async ({ page }) => {
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "player@example.com",
@@ -143,7 +149,7 @@ test("admin join links do not fill the access-code form", async ({ page }) => {
       }),
     );
     localStorage.setItem(
-      "buchunt.player-profile.google-account-auto-join",
+      "townseeker.player-profile.google-account-auto-join",
       "Baja",
     );
   });
@@ -206,7 +212,7 @@ test("manual access-code joins remain in the hunt list after closing details", a
 }) => {
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "admin@example.com",
@@ -215,7 +221,7 @@ test("manual access-code joins remain in the hunt list after closing details", a
       }),
     );
     localStorage.setItem(
-      "buchunt.player-profile.google-account-manual-join",
+      "townseeker.player-profile.google-account-manual-join",
       "Baja",
     );
   });
@@ -280,7 +286,7 @@ test("manual access-code errors are visible outside the closed hunt details", as
 }) => {
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "player@example.com",
@@ -289,7 +295,7 @@ test("manual access-code errors are visible outside the closed hunt details", as
       }),
     );
     localStorage.setItem(
-      "buchunt.player-profile.google-account-invalid-code",
+      "townseeker.player-profile.google-account-invalid-code",
       "Baja",
     );
   });
@@ -350,7 +356,7 @@ test("Google sign-in lets a player open and revisit saved progress", async ({
       },
     });
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "player@example.com",
@@ -802,7 +808,9 @@ test("Google sign-in lets a player open and revisit saved progress", async ({
   await expect(page).toHaveURL(/\/index\.html$/);
 });
 
-test("player sign-in uses the shared BucHunt home page", async ({ page }) => {
+test("player sign-in uses the shared TownSeeker home page", async ({
+  page,
+}) => {
   await page.route("**/api/auth/logout", async (route) => {
     expect(route.request().method()).toBe("POST");
     await route.fulfill({ json: { signedOut: true } });
@@ -832,7 +840,9 @@ test("player sign-in uses the shared BucHunt home page", async ({ page }) => {
     });
   });
   await page.goto("/player.html");
-  await page.getByRole("button", { name: "Sign in from BucHunt home" }).click();
+  await page
+    .getByRole("button", { name: "Sign in from TownSeeker home" })
+    .click();
   await expect(page).toHaveURL(/\/index\.html$/);
   await expect(page.locator("#welcome-heading")).toContainText(
     "Find your next",
@@ -852,7 +862,7 @@ test("expired progress tokens return to the shared home sign-in", async ({
     ]);
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         accountId: "google-player",
@@ -860,7 +870,7 @@ test("expired progress tokens return to the shared home sign-in", async ({
         idToken: "expired-token",
       }),
     );
-    localStorage.setItem("buchunt.player-profile.google-player", "Baja");
+    localStorage.setItem("townseeker.player-profile.google-player", "Baja");
     Object.defineProperty(window, "google", {
       value: {
         accounts: {
@@ -905,7 +915,9 @@ test("expired progress tokens return to the shared home sign-in", async ({
     page.getByRole("button", { name: "Sign in with Google" }),
   ).toBeVisible();
   expect(
-    await page.evaluate(() => sessionStorage.getItem("buchunt.player-session")),
+    await page.evaluate(() =>
+      sessionStorage.getItem("townseeker.player-session"),
+    ),
   ).toBeNull();
   expect(await page.context().cookies()).toContainEqual(
     expect.objectContaining({ name: "legacy", value: "unchanged" }),
@@ -923,10 +935,13 @@ test("player sign-in survives visiting Hunt Studio and returning", async ({
   };
   await page.addInitScript((savedIdentity) => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify(savedIdentity),
     );
-    localStorage.setItem("buchunt.player-profile.google-account-123", "Baja");
+    localStorage.setItem(
+      "townseeker.player-profile.google-account-123",
+      "Baja",
+    );
   }, identity);
   await page.route("**/api/auth/session", (route) =>
     route.fulfill({
@@ -995,7 +1010,7 @@ test("player sign-in survives visiting Hunt Studio and returning", async ({
   await expect
     .poll(() =>
       page.evaluate(() => {
-        const value = sessionStorage.getItem("buchunt.player-session");
+        const value = sessionStorage.getItem("townseeker.player-session");
         return value ? JSON.parse(value).idToken : null;
       }),
     )
@@ -1017,7 +1032,7 @@ test("multiple-choice selections submit immediately, retain rejected options, an
 }) => {
   await page.addInitScript(() => {
     sessionStorage.setItem(
-      "buchunt.player-session",
+      "townseeker.player-session",
       JSON.stringify({
         provider: "google",
         email: "a@example.com",
@@ -1025,7 +1040,7 @@ test("multiple-choice selections submit immediately, retain rejected options, an
         idToken: "test-token",
       }),
     );
-    localStorage.setItem("buchunt.player-profile.player-a", "Player A");
+    localStorage.setItem("townseeker.player-profile.player-a", "Player A");
   });
   const task = {
     id: "task-choice",

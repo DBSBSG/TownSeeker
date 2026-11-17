@@ -908,7 +908,7 @@ export function createApplication(options: ServerOptions = {}) {
           });
           return;
         }
-        let secret = /(?:^|;\s*)buchunt-creator=([a-f0-9]{64})(?:;|$)/.exec(
+        let secret = /(?:^|;\s*)townseeker-creator=([a-f0-9]{64})(?:;|$)/.exec(
           request.headers.cookie ?? "",
         )?.[1];
         const account = await googleCreator(request);
@@ -932,7 +932,7 @@ export function createApplication(options: ServerOptions = {}) {
           secret ??= randomBytes(32).toString("hex");
           response.setHeader(
             "Set-Cookie",
-            `buchunt-creator=${secret}; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
+            `townseeker-creator=${secret}; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
           );
           json(response, 200, {
             ok: true,
@@ -1786,14 +1786,14 @@ export function createApplication(options: ServerOptions = {}) {
           return;
         }
         const cookies = request.headers.cookie ?? "";
-        let player = /(?:^|;\s*)buchunt-player=([a-f0-9-]{36})(?:;|$)/.exec(
+        let player = /(?:^|;\s*)townseeker-player=([a-f0-9-]{36})(?:;|$)/.exec(
           cookies,
         )?.[1];
         if (!player) {
           player = randomUUID();
           response.setHeader(
             "Set-Cookie",
-            `buchunt-player=${player}; Path=/api/player; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
+            `townseeker-player=${player}; Path=/api/player; HttpOnly; SameSite=Strict; Max-Age=31536000${request.headers["x-forwarded-proto"] === "https" ? "; Secure" : ""}`,
           );
         }
         const hunt = await hunts.get(match[1]);
@@ -1959,6 +1959,6 @@ if (
     adminEmails: (process.env.ADMIN_EMAILS ?? "").split(","),
   });
   app.listen(Number(process.env.PORT ?? 3000), host, () =>
-    console.log("BucHunt server ready"),
+    console.log("TownSeeker server ready"),
   );
 }

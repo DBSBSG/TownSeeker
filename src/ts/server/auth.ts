@@ -35,8 +35,8 @@ class HttpError extends Error {
     this.status = status;
   }
 }
-const sessionCookie = "__Host-buchunt-session";
-const loginCookie = "__Host-buchunt-login";
+const sessionCookie = "__Host-townseeker-session";
+const loginCookie = "__Host-townseeker-login";
 const cookie = (name: string, token: string, age: number) =>
   `${name}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
 const now = () => Math.floor(Date.now() / 1000);

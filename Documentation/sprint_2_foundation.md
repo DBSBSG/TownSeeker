@@ -1,68 +1,57 @@
-# Sprint 2 shared foundation
+# TownSeeker application foundation
 
-## Scope
+TownSeeker is a DBSBSG scavenger-hunt application for communities, campuses, and
+local businesses. The application includes shared navigation and styling,
+administrator and player interfaces, account sign-in, organizations, hunts,
+tasks, participation controls, issue reports, and result exports.
 
-This shell supplies navigation, independent UI regions, TypeScript contracts, and test selectors. It does not implement any PBI acceptance criteria. Forms remain disabled until their owners implement the complete behavior. No credentials, answers, or saved configuration are embedded in public assets.
+## Structure
 
-## Run
+| Area                                | Source                                                                |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| Landing page and Google sign-in     | `src/index.html`, `src/ts/admin.ts`                                   |
+| Hunt Studio                         | `src/admin.html`, `src/ts/features/`                                  |
+| Player experience                   | `src/player.html`, `src/ts/features/displayTasks.ts`                  |
+| Shared contracts and bootstrap      | `src/ts/foundation/`                                                  |
+| Node.js HTTP server and persistence | `src/ts/server/`                                                      |
+| Authentication                      | `src/ts/server/auth.ts`, `src/ts/server/authSessionStore.ts`          |
+| Brand images                        | `src/assets/townseeker-logo.png`, `src/assets/townseeker-favicon.png` |
+| Automated verification              | `tests/`, `src/server/admin.test.ts`                                  |
 
-Run `pnpm install --frozen-lockfile`, `pnpm build`, then `pnpm run serve`. Open http://localhost:3000. After changing TypeScript, rebuild or use `pnpm build:watch` in a second terminal. Deployment already builds TypeScript and uploads src. Do not commit generated src/js files.
-Run `pnpm exec playwright install chromium` and `pnpm run test:e2e` for the shell smoke test. That test covers navigation and disabled placeholders, not feature completion.
+Feature modules receive their root element and service dependencies. Keep DOM
+queries within the supplied root, and coordinate changes to shared contracts,
+HTML, bootstrap, and CSS. Browser events and storage keys use the `townseeker`
+namespace. The logo is an image asset; do not recreate or duplicate its wordmark
+as adjacent text.
 
-## Independent work
+## Run and verify
 
-| Issue                       | Primary file                                            | Interface / UI region                        |
-| --------------------------- | ------------------------------------------------------- | -------------------------------------------- |
-| #31 Create hunt             | src/ts/features/createHunt.ts                           | mountCreateHunt; HuntInput; create-hunt      |
-| #32 Define task             | src/ts/features/defineTask.ts                           | mountDefineTask; TaskInput; define-task      |
-| #38 Display tasks           | src/ts/features/displayTasks.ts                         | mountDisplayTasks; PlayerHunt; display-tasks |
-| #34 JSON persistence        | src/ts/features/huntRepository.ts                       | HuntRepository                               |
-| #33 Validation              | src/ts/features/validateDefinitions.ts                  | DefinitionValidator; ValidationIssue         |
-| #43 Admin access            | src/ts/features/adminAccess.ts                          | AuthenticationService; admin-access          |
-| #35 Automated verification  | tests/deployment.spec.ts and future feature tests       | data-testid selectors; service doubles       |
-| #36 Deployment verification | existing deployment workflow and future live-site tests | build outputs and deployed URL               |
+Use the commands in the [README](../README.md) and [tools guide](tools.md).
+Build TypeScript before serving the application. Browser login requires the
+configured Google client, exact site origin, and HTTPS. Tests inject identity
+fixtures without enabling a production authentication bypass.
 
-Each mount function receives its root element and a service dependency. Tests can inject service doubles directly, without waiting for another PBI. Keep DOM queries inside the supplied root. Feature owners should use their own module first; coordinate shared HTML, contracts, bootstrap, and CSS edits to reduce merge conflicts. The existing mainMenu.ts and game.html remain outside this skeleton.
+## Contracts and storage
 
-## Contract decisions
+`OperationResult` represents successful operations and validation,
+authorization, missing-resource, network, and storage failures. Server validation
+is authoritative. Never return required answers or private ownership data in
+player projections.
 
-Hunt name and description are provisional basic identifying fields: the PBIs do not specify the final required field set. The validation owner and PO must agree on those rules. Task inputs contain a display label, required answer, and optional latitude/longitude pair; answer matching and location rules remain undecided.
-OperationResult distinguishes success from not-implemented, validation, unauthorized, not-found, storage, and network failures. A successful creation means the server has persisted it, not merely updated a browser object.
-PlayerHunt contains PlayerTask values with completed status and no requiredAnswer. Authentication must protect server administrative operations; hiding UI or enabling forms is not authorization.
-DefinitionValidator is an interface only. Its exported implementation is undefined until #33 supplies one. Do not treat that as successful validation.
+Hunt definitions, grants, organizations, profiles, progress, issue reports,
+game state, and authentication sessions use separate private JSON stores under
+`DATA_DIRECTORY`. File mutations are serialized in one Node.js process and use
+atomic writes. Do not put runtime data in the public static directory or a
+replaceable build directory. See [hunt configuration](hunt_configuration.md) for
+API details and storage limitations.
 
-## JSON files, not a database
+## Delivery
 
-The future server owns a private JSON file with this shape:
+Feature branches start from `stage` and are reviewed into `stage`. Production
+releases reach `main` through the team's review process. GitHub checks builds,
+formatting, types, authentication, APIs, and browser behavior. Hostinger deploys
+the Node.js application after those checks pass.
 
-```json
-{
-  "schemaVersion": 1,
-  "hunts": [
-    {
-      "id": "example-hunt-id",
-      "name": "Example",
-      "description": "Example description",
-      "tasks": [
-        {
-          "id": "example-task-id",
-          "huntId": "example-hunt-id",
-          "displayLabel": "Example task",
-          "requiredAnswer": "Private server-only example",
-          "location": { "latitude": 36.3, "longitude": -82.4 }
-        }
-      ]
-    }
-  ]
-}
-```
-
-This example is documentation, not a shipped data fixture. Keep the JSON outside the publicly served src directory. Do not use localStorage as server persistence. #34 must implement file parsing, schema checks, retrieval after restart, failed-write handling, and safe atomic writes with serialized concurrent mutations. Only report success after the write succeeds. Player completion storage is separate from hunt definitions and needs a player identity decision.
-
-S3 + CloudFront currently host the static frontend. They do not run a server process that can authenticate administrators and edit a local JSON file. Server runtime, durable file location, API URL, sessions, and deployment wiring still need team decisions and separate implementation. No server, database, API endpoint, or infrastructure resource is added by this shell.
-
-Suggested API boundaries for team agreement (not implemented): administrative session creation/deletion; create hunt; add task; get administrative hunt; get player hunt. Use server-issued session cookies and enforce authorization/validation on the server. Never return required answers to players.
-
-## Integration
-
-Freeze shared contracts before parallel development. Review a proposed contract change with affected owners. Inject doubles for unavailable services and keep production adapters explicitly unimplemented until real services exist. #35 should add success/failure tests as PBIs become implemented. #36 should verify the deployed URL after deployment, separately from local smoke tests.
+The remaining AWS infrastructure files are legacy references. They are not the
+current runtime architecture. Actual Google login and deployment persistence
+must be verified on Hostinger before release.

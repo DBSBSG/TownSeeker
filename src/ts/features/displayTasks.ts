@@ -11,8 +11,8 @@ import type {
   PlayerIdentity,
 } from "../foundation/types.js";
 
-const PLAYER_SESSION_KEY = "buchunt.player-session";
-const PLAYER_PROFILE_KEY_PREFIX = "buchunt.player-profile.";
+const PLAYER_SESSION_KEY = "townseeker.player-session";
+const PLAYER_PROFILE_KEY_PREFIX = "townseeker.player-profile.";
 function storedDisplayName(accountId: string): string | null {
   try {
     const value = localStorage
@@ -1226,7 +1226,7 @@ export function mountDisplayTasks(
   const preparePlayerSignIn = async (): Promise<void> => {
     setGoogleSignInEnabled(false);
     providerStatus.hidden = false;
-    providerStatus.textContent = "Returning to BucHunt sign-in...";
+    providerStatus.textContent = "Returning to TownSeeker sign-in...";
     try {
       // Clear any cookie-backed login so the shared home page presents its
       // single Google sign-in flow instead of redirecting back to this page.

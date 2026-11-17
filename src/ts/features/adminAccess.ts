@@ -46,7 +46,9 @@ export async function loadGoogleIdentity(): Promise<GoogleIdentityApi> {
       script.async = true;
       script.onload = () => resolve();
       script.onerror = () =>
-        reject(new Error("Google sign-in could not load. Reload to try again."));
+        reject(
+          new Error("Google sign-in could not load. Reload to try again."),
+        );
       document.head.append(script);
     }).catch((error: unknown) => {
       googleScript = undefined;
@@ -64,7 +66,10 @@ function object(value: unknown): JsonObject | null {
     ? (value as JsonObject)
     : null;
 }
-function failure<T>(message: string, code: "validation" | "unauthorized" | "network"): OperationResult<T> {
+function failure<T>(
+  message: string,
+  code: "validation" | "unauthorized" | "network",
+): OperationResult<T> {
   return { ok: false, code, message };
 }
 type ApiResult =
@@ -80,13 +85,29 @@ async function api(path: string, body?: unknown): Promise<ApiResult> {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = object(await response.json());
-    if (!data) return { ok: false, error: failure("The sign-in service returned an invalid response.", "network") };
+    if (!data)
+      return {
+        ok: false,
+        error: failure(
+          "The sign-in service returned an invalid response.",
+          "network",
+        ),
+      };
     return { ok: true, response, data };
   } catch {
-    return { ok: false, error: failure("The sign-in service could not be reached. Try again.", "network") };
+    return {
+      ok: false,
+      error: failure(
+        "The sign-in service could not be reached. Try again.",
+        "network",
+      ),
+    };
   }
 }
-function apiFailure<T>(response: Response, data: JsonObject): OperationResult<T> {
+function apiFailure<T>(
+  response: Response,
+  data: JsonObject,
+): OperationResult<T> {
   const message =
     typeof data.error === "string" ? data.error : "Google sign-in failed.";
   const code =
@@ -107,7 +128,8 @@ function parseSession(value: unknown): AdminSession | null {
     typeof user.expiresAt !== "number" ||
     !Number.isFinite(user.expiresAt) ||
     (user.role !== "administrator" && user.role !== "user")
-  ) return null;
+  )
+    return null;
   return {
     subject: user.subject,
     email: user.email,
@@ -127,10 +149,17 @@ export function createAuthenticationService(): AuthenticationService {
         !config.clientId ||
         typeof config.nonce !== "string" ||
         !config.nonce
-      ) return failure("Google sign-in is not configured correctly.", "network");
+      )
+        return failure(
+          "Google sign-in is not configured correctly.",
+          "network",
+        );
       return {
         ok: true,
-        value: { clientId: config.clientId, nonce: config.nonce } satisfies GoogleAuthConfig,
+        value: {
+          clientId: config.clientId,
+          nonce: config.nonce,
+        } satisfies GoogleAuthConfig,
       };
     },
     async signIn(credential) {
@@ -140,7 +169,10 @@ export function createAuthenticationService(): AuthenticationService {
       const session = parseSession(result.data);
       return session
         ? { ok: true, value: session }
-        : failure("The sign-in service returned an invalid session.", "network");
+        : failure(
+            "The sign-in service returned an invalid session.",
+            "network",
+          );
     },
     async getSession() {
       const result = await api("/api/auth/session");
@@ -149,7 +181,10 @@ export function createAuthenticationService(): AuthenticationService {
       const session = parseSession(result.data);
       return session
         ? { ok: true, value: session }
-        : failure("The sign-in service returned an invalid session.", "network");
+        : failure(
+            "The sign-in service returned an invalid session.",
+            "network",
+          );
     },
     async getCapabilities() {
       const result = await api("/api/admin/capabilities");
@@ -180,8 +215,18 @@ export function mountAdminAccess(
   const status = root.querySelector<HTMLElement>("#admin-status");
   const identity = root.querySelector<HTMLElement>("#admin-identity");
   const signOut = root.querySelector<HTMLButtonElement>("#sign-out");
-  if (!panel || !loginPanel || !buttonHost || !adminPanel || !userPanel ||
-      !signedInPanel || !status || !identity || !signOut) return;
+  if (
+    !panel ||
+    !loginPanel ||
+    !buttonHost ||
+    !adminPanel ||
+    !userPanel ||
+    !signedInPanel ||
+    !status ||
+    !identity ||
+    !signOut
+  )
+    return;
 
   let expiryTimer: ReturnType<typeof setTimeout> | undefined;
   let google: GoogleIdentityApi | undefined;
@@ -209,16 +254,20 @@ export function mountAdminAccess(
     adminPanel.hidden = session.role !== "administrator";
     userPanel.hidden = session.role === "administrator";
     identity.textContent = `Signed in as ${session.email}.`;
-    status.textContent = session.role === "administrator"
-      ? "Signed in with administrator access."
-      : isAdminPage
-        ? "Signed in. This account does not have administrator access."
-        : "Signed in.";
+    status.textContent =
+      session.role === "administrator"
+        ? "Signed in with administrator access."
+        : isAdminPage
+          ? "Signed in. This account does not have administrator access."
+          : "Signed in.";
     clearTimeout(expiryTimer);
-    expiryTimer = setTimeout(() => {
-      showSignedOut("Session expired. Sign in again.");
-      void prepareGoogle();
-    }, Math.max(0, session.expiresAt * 1000 - Date.now()));
+    expiryTimer = setTimeout(
+      () => {
+        showSignedOut("Session expired. Sign in again.");
+        void prepareGoogle();
+      },
+      Math.max(0, session.expiresAt * 1000 - Date.now()),
+    );
   };
   const handleCredential = async (credential: string): Promise<void> => {
     status.textContent = "Verifying Google sign-in…";
@@ -254,7 +303,11 @@ export function mountAdminAccess(
         width: 280,
       });
     } catch (error) {
-      showSignedOut(error instanceof Error ? error.message : "Google sign-in could not load.");
+      showSignedOut(
+        error instanceof Error
+          ? error.message
+          : "Google sign-in could not load.",
+      );
     }
   };
   signOut.addEventListener("click", async () => {
@@ -266,14 +319,17 @@ export function mountAdminAccess(
       return;
     }
     google?.accounts.id.disableAutoSelect();
-    showSignedOut("Signed out of BucHunt.");
+    showSignedOut("Signed out of TownSeeker.");
     void prepareGoogle();
   });
-  void service.getSession().then((result) => {
-    if (result.ok) return showSession(result.value);
-    showSignedOut("Sign in with your Google account.");
-    return prepareGoogle();
-  }).catch(() => {
-    showSignedOut("The sign-in service could not be reached. Try again.");
-  });
+  void service
+    .getSession()
+    .then((result) => {
+      if (result.ok) return showSession(result.value);
+      showSignedOut("Sign in with your Google account.");
+      return prepareGoogle();
+    })
+    .catch(() => {
+      showSignedOut("The sign-in service could not be reached. Try again.");
+    });
 }

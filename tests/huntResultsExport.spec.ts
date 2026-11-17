@@ -12,7 +12,7 @@ test("hunt overview downloads PDF and CSV and recovers from a failed export", as
   page,
   context,
 }) => {
-  const directory = await mkdtemp(join(tmpdir(), "buchunt-export-ui-"));
+  const directory = await mkdtemp(join(tmpdir(), "townseeker-export-ui-"));
   const app = createApplication({
     dataDirectory: directory,
     staticDirectory: resolve("src"),
@@ -38,7 +38,7 @@ test("hunt overview downloads PDF and CSV and recovers from a failed export", as
     const task = await hunts.addTask(hunt.id, {
       displayLabel: "Library",
       description: "Find the library",
-      requiredAnswer: "Bucky",
+      requiredAnswer: "Explorer",
       location: { latitude: 36, longitude: -82 },
       order: 1,
       answerCaseSensitive: false,

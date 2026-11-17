@@ -73,7 +73,7 @@ function seedSession(
     expiresAt: Math.floor(Date.now() / 1000) + 3600,
     ...changes,
   });
-  return `__Host-buchunt-session=${token}`;
+  return `__Host-townseeker-session=${token}`;
 }
 
 test("Google configuration creates a short-lived, browser-bound nonce stored only as a hash", async () => {
@@ -109,9 +109,9 @@ test("an approved Google identity receives a secure session with its administrat
   assert.equal(response.statusCode, 200);
   assert.match(
     response.cookies[0],
-    /^__Host-buchunt-session=[a-f0-9]{64}; Path=\/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600$/,
+    /^__Host-townseeker-session=[a-f0-9]{64}; Path=\/; HttpOnly; Secure; SameSite=Strict; Max-Age=3600$/,
   );
-  assert.match(response.cookies[1], /^__Host-buchunt-login=;.*Max-Age=0$/);
+  assert.match(response.cookies[1], /^__Host-townseeker-login=;.*Max-Age=0$/);
   const sessionCookie = response.cookies[0].split(";")[0];
   const token = sessionCookie.split("=")[1];
   assert.equal(response.body.includes(token), false);
@@ -188,7 +188,7 @@ test("expired and unknown nonces are rejected before Google verification", async
     (
       await handler(
         event("/api/auth/login", "POST", [
-          `__Host-buchunt-login=${"b".repeat(64)}`,
+          `__Host-townseeker-login=${"b".repeat(64)}`,
         ]),
       )
     ).statusCode,
@@ -285,7 +285,7 @@ test("expired, missing, tampered and wrong-kind sessions fail closed", async () 
     (
       await handler(
         event("/api/auth/session", "GET", [
-          `__Host-buchunt-session=${"c".repeat(64)}`,
+          `__Host-townseeker-session=${"c".repeat(64)}`,
         ]),
       )
     ).statusCode,
@@ -418,7 +418,7 @@ test("logout removes the server session, clears the cookie and prevents replay",
   const response = await handler(event("/api/auth/logout", "POST", [session]));
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), { signedOut: true });
-  assert.match(response.cookies[0], /^__Host-buchunt-session=;.*Max-Age=0$/);
+  assert.match(response.cookies[0], /^__Host-townseeker-session=;.*Max-Age=0$/);
   assert.equal(records.size, 0);
   assert.equal(
     (await handler(event("/api/auth/session", "GET", [session]))).statusCode,
@@ -511,12 +511,14 @@ test("malformed credentials, oversized bodies and ambiguous cookies are denied",
   assert.equal(
     (
       await handler(
-        event("/api/auth/session", "GET", ["__Host-buchunt-session=bad-token"]),
+        event("/api/auth/session", "GET", [
+          "__Host-townseeker-session=bad-token",
+        ]),
       )
     ).statusCode,
     401,
   );
-  const duplicate = `__Host-buchunt-session=${"a".repeat(64)}`;
+  const duplicate = `__Host-townseeker-session=${"a".repeat(64)}`;
   assert.equal(
     (await handler(event("/api/auth/session", "GET", [duplicate, duplicate])))
       .statusCode,
@@ -644,7 +646,7 @@ test("session store outages fail closed without leaking storage details", async 
   for (const request of [
     event("/api/auth/config"),
     event("/api/auth/session", "GET", [
-      `__Host-buchunt-session=${"a".repeat(64)}`,
+      `__Host-townseeker-session=${"a".repeat(64)}`,
     ]),
   ]) {
     const response = await handler(request);

@@ -610,10 +610,10 @@ export function mountCreateHunt(
   document
     .querySelector('[data-testid="back-to-manage-hunts"]')
     ?.addEventListener("click", showManagerView);
-  document.addEventListener("buchunt:organizations-changed", () => {
+  document.addEventListener("townseeker:organizations-changed", () => {
     if (organizationSelect) void populateOrganizationSelect(organizationSelect);
   });
-  document.addEventListener("buchunt:hunt-settings-saved", () => {
+  document.addEventListener("townseeker:hunt-settings-saved", () => {
     void refresh();
   });
   document

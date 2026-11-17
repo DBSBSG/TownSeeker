@@ -1,103 +1,41 @@
-# Tools
+# TownSeeker development tools
 
-## Purpose
+DBSBSG maintains [TownSeeker](https://github.com/DBSBSG/TownSeeker) in GitHub.
+Use issues for planned work and pull requests for review.
 
-This document defines the main tools the team plans to use during development, planning, review, and testing.
+## Runtime and dependencies
 
-The team will try to use GitHub as much as possible so work, issues, review, and progress stay centralized.
+- Node.js 22.18 or newer.
+- pnpm 10.33.0, as declared in `package.json`.
+- TypeScript for browser and server code.
+- Google Identity Services and `google-auth-library` for sign-in.
+- Hostinger Business managed Node.js hosting for deployment.
 
----
+Run `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm serve`.
+Rebuild after TypeScript changes or use `pnpm build:watch`. Generated `src/js`
+files are build outputs, not source changes.
 
-## Primary Tool Set
+## Validation
 
-### GitHub
-GitHub will be the primary platform for the project.
+- `pnpm lint` checks application TypeScript.
+- `pnpm format:check` checks the repository's configured formatting scope.
+- Use Prettier 3.9.10 on every changed supported file before committing.
+- `pnpm check:admin` and `pnpm test:admin` check authentication.
+- `pnpm exec playwright install chromium` installs the test browser.
+- `pnpm test` runs API, persistence, and browser tests.
 
-It will be used for:
-- repository hosting
-- source control
-- pull requests
-- code review
-- issues
-- project boards
-- branch workflow visibility
+The deployment workflow runs quality checks for PRs and deploys `main` only.
+Live HTTP smoke checks run after a successful Hostinger deployment. Local tests
+use isolated stores and identity fixtures; they do not prove a successful live
+Google login or persistence across a Hostinger redeployment.
 
-GitHub is the center of the team workflow.
+## Configuration and operations
 
----
+See the [README](../README.md) for authentication variables, deployment
+credentials, private persistent storage, and remaining live verification.
+Keep secrets in Hostinger runtime settings or GitHub Actions secrets.
+The connected GitHub organization is DBSBSG.
 
-### LucidChart
-LucidChart will be used for diagrams and lightweight design communication.
-
-It can be used for:
-- architecture sketches
-- feature flow diagrams
-- state flow diagrams
-- interaction concepts
-- quick review visuals
-
-The goal is lightweight communication, not overly formal documentation.
-
----
-
-## Development Tooling
-
-### TypeScript
-TypeScript will be used for application code.
-
-Why:
-- stronger type safety
-- clearer interfaces
-- easier maintenance as the project grows
-- better long-term readability
-
-### Prettier
-Prettier will be used for formatting.
-
-Why:
-- consistent formatting
-- fewer style debates
-- faster review focus on actual logic
-
-### ESLint
-ESLint will be used for linting.
-
-Why:
-- enforces code quality rules
-- catches common mistakes early
-- keeps code style and correctness more consistent
-
----
-
-## GitHub-Centered Workflow
-
-The team will use GitHub as much as possible for coordination.
-
-This includes:
-- using issues for tasking
-- using GitHub Projects for sprint board management
-- using pull requests for review
-- using branches to manage release flow
-- keeping progress visible in the repository workflow
-
----
-
-## Tool Summary
-
-The core team tools are:
-
-- **GitHub** for source control, issues, pull requests, and project boards
-- **LucidChart** for design diagrams
-- **TypeScript** for implementation
-- **Prettier** for formatting
-- **ESLint** for linting
-
----
-
-## Working Agreement
-
-The team should prefer:
-- GitHub-native workflow where practical
-- Docker-based validation for real testing
-- lightweight diagrams in Excalidraw for communication
-- consistent development standards enforced with TypeScript, Prettier, and ESLint
+Diagrams may use Mermaid or another tool the team chooses. No Docker setup,
+paid diagramming service, or AWS account is required by the current development
+or deployment commands.

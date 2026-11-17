@@ -16,7 +16,7 @@ const input = {
 const question = {
   displayLabel: "First",
   description: "Name the mascot",
-  requiredAnswer: "Bucky",
+  requiredAnswer: "Explorer",
   location: { latitude: 0, longitude: 0 },
   order: 1,
   answerCaseSensitive: false,
@@ -49,7 +49,7 @@ test("Kahoot state is synchronized, answers are immutable, scoring uses server t
       (await game.state(hunt.id, active, participants[0], 1000)).phase,
     ).toBe("lobby");
     await expect(
-      game.answer(hunt.id, "one", first.id, "Bucky", active, 1000),
+      game.answer(hunt.id, "one", first.id, "Explorer", active, 1000),
     ).rejects.toThrow("not accepting");
     await game.control(definition, "start", participants, 2000);
     await expect(
@@ -62,12 +62,12 @@ test("Kahoot state is synchronized, answers are immutable, scoring uses server t
     expect(JSON.stringify(a)).not.toContain("requiredAnswer");
     expect(JSON.stringify(a)).not.toContain(second.id);
     await expect(
-      game.answer(hunt.id, "one", second.id, "Bucky", active, 2300),
+      game.answer(hunt.id, "one", second.id, "Explorer", active, 2300),
     ).rejects.toThrow("current question");
     await expect(
       game.control(definition, "next", participants, 2300),
     ).rejects.toThrow("Wait for answers");
-    await game.answer(hunt.id, "one", first.id, "bucky", active, 3000);
+    await game.answer(hunt.id, "one", first.id, "explorer", active, 3000);
     await expect(
       game.answer(hunt.id, "one", first.id, "wrong", active, 3100),
     ).rejects.toThrow("already been submitted");
@@ -75,7 +75,7 @@ test("Kahoot state is synchronized, answers are immutable, scoring uses server t
     expect(
       (await restarted.state(hunt.id, active, participants[0], 4000)).submitted,
     ).toBe(true);
-    await restarted.answer(hunt.id, "two", first.id, "Bucky", active, 7000);
+    await restarted.answer(hunt.id, "two", first.id, "Explorer", active, 7000);
     const results = await restarted.state(
       hunt.id,
       active,
@@ -107,7 +107,7 @@ test("deadline rejects late answers and host can finish an untimed question", as
     const game = new KahootStore(join(directory, "game.json"));
     await game.control(definition, "start", participants, 1000);
     await expect(
-      game.answer(hunt.id, "one", task.id, "Bucky", ["one", "two"], 11000),
+      game.answer(hunt.id, "one", task.id, "Explorer", ["one", "two"], 11000),
     ).rejects.toThrow("not accepting");
     expect(
       (await game.state(hunt.id, ["one", "two"], undefined, 11000)).phase,

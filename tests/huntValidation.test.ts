@@ -220,7 +220,7 @@ test("multiple choice requires four distinct choices and the configured correct 
 
 test("organization is optional and length bounded", () => {
   expect(
-    validateHunt({ ...fixture(), organizationName: "ETSU Computing" }).ok,
+    validateHunt({ ...fixture(), organizationName: "DBSBSG Computing" }).ok,
   ).toBe(true);
   expectInvalid(
     { ...fixture(), organizationName: "x".repeat(121) },

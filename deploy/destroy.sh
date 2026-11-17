@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Legacy AWS teardown reference. The Hostinger workflow does not invoke this script.
 set -euo pipefail
 
 if [ "$#" -lt 1 ]; then
@@ -47,7 +48,7 @@ if [[ "$STATUS" != DELETE_IN_PROGRESS ]]; then
   BUCKET_NAME=$(echo "$RESOURCES" | jq -r '.StackResourceSummaries[] | select(.LogicalResourceId == "WebsiteBucket" and .ResourceStatus != "DELETE_COMPLETE") | .PhysicalResourceId // empty')
   # Existing PR stacks predate the template's disposable-volume setting. Update
   # only their attached root mapping before terminating through CloudFormation.
-  if [[ "$STACK_NAME" =~ ^bucstop-pr-[0-9]+$ ]]; then
+  if [[ "$STACK_NAME" =~ ^townseeker-pr-[0-9]+$ ]]; then
     INSTANCE_ID=$(echo "$RESOURCES" | jq -r '.StackResourceSummaries[] | select(.LogicalResourceId == "ApplicationInstance" and .ResourceStatus != "DELETE_COMPLETE") | .PhysicalResourceId // empty')
     if [[ -n "$INSTANCE_ID" ]]; then
       if INSTANCE_JSON=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \

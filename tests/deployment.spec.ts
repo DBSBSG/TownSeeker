@@ -7,7 +7,7 @@ test("landing page keeps player navigation behind sign-in", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/BucHunt/);
+  await expect(page).toHaveTitle(/TownSeeker/);
   await expect(page.getByTestId("google-sign-in")).toBeAttached();
   await expect(page.getByRole("navigation")).toHaveCount(0);
 });
@@ -268,7 +268,9 @@ test("player account endpoints require bearer identity and never issue cookies",
     expect(payload.ok).toBe(false);
   }
   const response = await request.get("/api/player/account/hunts", {
-    headers: { Cookie: "buchunt-player=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" },
+    headers: {
+      Cookie: "townseeker-player=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    },
   });
   expect(response.status()).toBe(401);
   expect(response.headers()["set-cookie"]).toBeUndefined();
@@ -292,7 +294,7 @@ test.describe("@live-deployment Hostinger smoke checks", () => {
       expect(response.headers()["content-type"]).toContain("text/html");
       const html = await response.text();
       expect(html).toContain(marker);
-      // Both existing BucHunt assets and future rebranded assets are checked
+      // Both existing TownSeeker assets and future rebranded assets are checked
       // from the actual page, rather than hardcoding a logo name or title.
       const assets = Array.from(
         html.matchAll(/(?:src|href)="([^"#]+\.(?:js|css|svg|png))"/g),
@@ -335,7 +337,7 @@ test.describe("@live-deployment Hostinger smoke checks", () => {
     ]) {
       for (const headers of [
         {},
-        { Cookie: `__Host-buchunt-session=${"a".repeat(64)}` },
+        { Cookie: `__Host-townseeker-session=${"a".repeat(64)}` },
       ]) {
         const response = await request.get(path, { headers, maxRedirects: 0 });
         expect(response.status(), path).toBe(401);
@@ -369,7 +371,7 @@ test.describe("@live-deployment Hostinger smoke checks", () => {
       .find(
         (header) =>
           header.name.toLowerCase() === "set-cookie" &&
-          header.value.startsWith("__Host-buchunt-login="),
+          header.value.startsWith("__Host-townseeker-login="),
       )?.value;
     expect(cookie, "The login nonce must be browser-bound").toBeTruthy();
     expect(cookie).toMatch(/;\s*Secure(?:;|$)/i);

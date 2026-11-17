@@ -1,10 +1,17 @@
-# BucHunt
+# TownSeeker
 
-BucHunt is a customizable scavenger hunt platform for the East Tennessee State University community.
+TownSeeker is a scavenger-hunt platform by DBSBSG for communities, campuses, and local businesses.
+
+Source: [DBSBSG/TownSeeker](https://github.com/DBSBSG/TownSeeker).
 
 The integrated sprint supports creating hunts, defining tasks with answers and coordinates, saving and retrieving server-side JSON configuration, and displaying player tasks with persisted completion. Google sign-in links hunt ownership, contributor access, player profiles, and progress to stable account identities. Access-code joining is available to signed-in players.
 
 ## Local development
+
+TownSeeker uses its own logo, favicon, browser-storage keys, event names, export
+labels, and authentication cookies. This rebrand signs out existing browser
+sessions; sign in again to retrieve saved server-side profiles and progress.
+The configured legacy ownership email and saved hunt identifiers are unchanged.
 
 Use Node.js 22+ and pnpm 10.33.0.
 
@@ -16,7 +23,7 @@ pnpm serve
 
 Open `http://127.0.0.1:3000/`. AWS access is not needed. Real Google browser sign-in requires the authentication variables and HTTPS described below; automated tests use isolated identity fixtures. After signing in, use Hunt Studio to create hunts and tasks or reopen hunts you own or contribute to.
 
-To collaborate, the hunt owner enters the contributor's Google email under **Contributors**. The invite becomes active when that person signs in with the same verified email. BucHunt does not send an email, so share the site link with them. Contributors can add tasks; only the owner can grant, cancel, or remove access.
+To collaborate, the hunt owner enters the contributor's Google email under **Contributors**. The invite becomes active when that person signs in with the same verified email. TownSeeker does not send an email, so share the site link with them. Contributors can add tasks; only the owner can grant, cancel, or remove access.
 
 Existing hunts owned by temporary browser IDs are reassigned to Baja Blast's verified Google account (`codepro1012@gmail.com`) the first time that account opens Hunt Studio in each deployment. The migration updates only legacy `browser:` ownership IDs; hunt IDs, tasks, codes, and progress remain unchanged. Each deployment has its own private `DATA_DIRECTORY`, so sign in at each environment that contains hunts to migrate. New hunts are owned by the signed-in Google account. Runtime JSON files store hunt definitions, contributor grants, profiles, and progress separately.
 
@@ -65,7 +72,7 @@ exactly once. Multiple processes, replicas, or overlapping releases sharing this
 directory require a transactional session database before enabling them. Persistent
 storage and Hostinger's process/deployment behavior must be verified before launch.
 
-The host-only `__Host-buchunt-session` cookie keeps its current name and uses
+The host-only `__Host-townseeker-session` cookie uses
 `HttpOnly; Secure; SameSite=Strict; Path=/`. Sessions expire after one hour.
 The login nonce cookie is also browser-bound and secure. Google signature,
 issuer, audience, expiry, verified email, authorized party, and nonce checks are

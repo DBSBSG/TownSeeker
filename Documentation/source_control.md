@@ -46,17 +46,20 @@ gitGraph
 ### Branch Roles
 
 #### `main`
+
 - contains release-ready code
 - should represent the current stable version of the project
 - should only receive changes that are ready to release
 
 #### `stage`
+
 - integration branch for active sprint work
 - feature work is squash merged into `stage`
 - serves as the main testing and validation branch before release
 - should reflect the current candidate build for the sprint
 
 #### Feature Branches
+
 - created from `stage`
 - used for individual features, fixes, or focused work
 - squash merged back into `stage` after review
@@ -66,17 +69,20 @@ gitGraph
 ## Branching Workflow
 
 ### Creating Work
+
 1. pull the latest `stage`
 2. create a feature branch from `stage`
 3. complete the work on the feature branch
 4. open a pull request into `stage`
 
 ### Integration
+
 - completed features live in `stage`
 - `stage` is the working integration branch for the sprint
 - once the sprint release is ready, `stage` is squash merged into `main`
 
 ### Release Flow
+
 1. confirm items in `stage` are ready for release
 2. review integrated behavior in `stage`
 3. merge `stage` into `main`
@@ -89,6 +95,7 @@ gitGraph
 Feature branches should use clear, descriptive names.
 
 ### Examples
+
 - `feature/player-movement`
 - `feature/touch-controls`
 - `feature/wave-spawning`
@@ -96,6 +103,7 @@ Feature branches should use clear, descriptive names.
 - `chore/docker-update`
 
 ### Guidelines
+
 - use lowercase
 - separate words with hyphens
 - keep names short but descriptive
@@ -112,12 +120,14 @@ Commits should be:
 - clearly named
 
 ### Good commit message examples
+
 - `Add player movement boundaries`
-- `Set up Docker local web server`
+- `Set up the local Node.js server`
 - `Refactor input handling into module`
 - `Fix collision detection for lane edges`
 
 ### Avoid
+
 - `update`
 - `changes`
 - `stuff`
@@ -130,6 +140,7 @@ Commits should be:
 All feature work should go through pull requests.
 
 ### Feature Branch to Stage
+
 A pull request into `stage` should include:
 
 - what changed
@@ -138,6 +149,7 @@ A pull request into `stage` should include:
 - any known limitations or follow-up items
 
 ### Expectations
+
 - the change should meet the feature goal
 - automated testing should pass if available
 - the feature branch should receive two peer reviews before merge
@@ -166,14 +178,18 @@ Before merging `stage` into `main`:
 ## Merge Rules
 
 ### Into `stage`
+
 A feature branch may be squash merged into `stage` when:
+
 - it does what it was intended to do
 - automated checks pass
 - it has two peer reviews
 - it has been tested in an actual environment
 
 ### Into `main`
+
 `stage` may be squash merged into `main` when:
+
 - the sprint release is ready
 - work in `stage` has been reviewed
 - major issues have been resolved
@@ -186,11 +202,13 @@ A feature branch may be squash merged into `stage` when:
 If GitHub settings allow, the team should protect:
 
 ### `main`
+
 - no direct pushes
 - pull request required
 - review required before merge
 
 ### `stage`
+
 - no direct pushes unless explicitly agreed for emergency cases
 - pull request required for normal feature integration
 
@@ -201,6 +219,7 @@ If GitHub settings allow, the team should protect:
 The team will use GitHub as much as possible for workflow visibility.
 
 This includes:
+
 - repository hosting
 - pull requests
 - code review
