@@ -631,12 +631,20 @@ test("Google sign-in lets a player open and revisit saved progress", async ({
     "36.304000, -82.368000",
   );
   const detailsDialog = page.getByTestId("player-hunt-details");
-  await detailsDialog.evaluate((dialog) => {
-    dialog.scrollTop = dialog.scrollHeight;
-  });
-  expect(
-    await detailsDialog.evaluate((dialog) => dialog.scrollTop),
-  ).toBeGreaterThan(0);
+  // loadHunt restores the dialog's saved position on the next animation frame.
+  // Scroll after that callback so it cannot undo this interaction in CI.
+  await detailsDialog.evaluate(
+    (dialog) =>
+      new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => {
+          dialog.scrollTo({ top: dialog.scrollHeight, behavior: "instant" });
+          resolve();
+        });
+      }),
+  );
+  await expect
+    .poll(() => detailsDialog.evaluate((dialog) => dialog.scrollTop))
+    .toBeGreaterThan(0);
   await page.getByTestId("close-player-hunt-details").click();
   await expect(detailsDialog).not.toBeVisible();
   await page
