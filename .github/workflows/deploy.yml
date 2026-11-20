@@ -2,6 +2,7 @@ name: Deploy to Hostinger
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main, stage, "feature/**", "codex/**"]
   workflow_dispatch:
@@ -30,44 +31,6 @@ jobs:
       - run: pnpm check:admin
       - run: pnpm test:admin
       - run: node --check server/dataBackup.mjs
+      - run: node --test tests/previewDeployment.test.mjs
+      - run: pnpm exec prettier --check deploy/preview-slots.mjs tests/previewDeployment.test.mjs .github/workflows/deploy.yml .github/workflows/destroy-pr.yml
       - run: bash -n deploy/deploy.sh
-  web-deploy:
-    name: Deploy
-    needs: [lint, e2e, verify]
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    concurrency:
-      group: hostinger-production
-      cancel-in-progress: false
-    steps:
-      - name: Get latest code
-        uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile --ignore-scripts --config.node-linker=hoisted
-      # Upload the tested commit directly; Hostinger Git import is not required.
-      - name: Upload source archive and deploy Node.js application on Hostinger
-        id: release
-        env:
-          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
-          HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME }}
-          HOSTINGER_DOMAIN: ${{ vars.HOSTINGER_DOMAIN }}
-        run: bash deploy/deploy.sh
-      - name: Verify deployed pages, APIs, and authentication
-        if: steps.release.outputs.site_url != ''
-        env:
-          BASE_URL: ${{ steps.release.outputs.site_url }}
-          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
-        run: pnpm exec playwright test tests/deployment.spec.ts --grep @live-deployment --workers=1
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: hostinger-deployment-test-results
-          path: test-results/
-          if-no-files-found: ignore

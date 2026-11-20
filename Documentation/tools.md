@@ -24,8 +24,12 @@ files are build outputs, not source changes.
 - `pnpm exec playwright install chromium` installs the test browser.
 - `pnpm test` runs API, persistence, and browser tests.
 
-The deployment workflow runs quality checks for PRs, `stage`, and feature branches,
-and deploys `main` only.
+The deployment workflow runs quality checks for PRs, `stage`, and feature branches.
+A trusted reconciler deploys production, stage, and three queued PR preview slots
+from uploaded source archives. Stage never consumes a PR slot. Closing a PR parks
+its preview and releases the slot to the next queued PR. GitHub deployment statuses
+provide links. Run `node --test tests/previewDeployment.test.mjs` for queue and
+deployment orchestration tests. See the README for the five hostname variables.
 Live HTTP smoke checks run after a successful Hostinger deployment. Local tests
 use isolated stores and identity fixtures; they do not prove a successful live
 Google login or persistence across a Hostinger redeployment.

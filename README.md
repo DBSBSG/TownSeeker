@@ -22,7 +22,8 @@ Open `http://127.0.0.1:3000/`. Real Google browser sign-in requires the authenti
 For local configuration, copy `.env.example` to `.env` and fill in the deployment
 values. `pnpm start` loads `.env` when present; existing environment variables
 take precedence. `pnpm serve` is an alias for the same startup command. Build
-TypeScript before starting. On Hostinger, configure runtime variables in hPanel.
+TypeScript before starting. On Hostinger, the deployment reconciler manages
+runtime variables as described below.
 
 To collaborate, the hunt owner enters the contributor's Google email under **Contributors**. The invite becomes active when that person signs in with the same verified email. TownSeeker does not send an email, so share the site link with them. Contributors can add tasks; only the owner can grant, cancel, or remove access.
 
@@ -37,12 +38,69 @@ pnpm test
 
 See [Hunt configuration](Documentation/hunt_configuration.md) for the JSON format, API, persistence guarantees and recovery limitations. Hostinger deployment requires a Node.js application and private persistent storage. Build, test, peer review, deployment, and deployed verification must succeed before release.
 
+## Hostinger deployment environments
+
+GitHub Actions uploads source archives through the Hostinger API; Hostinger Git
+import is not required. Five distinct managed Node.js websites provide stable URLs:
+
+| Environment | Source                                | GitHub Actions variable      |
+| ----------- | ------------------------------------- | ---------------------------- |
+| Production  | `main`                                | `HOSTINGER_DOMAIN`           |
+| Stage       | `stage`, including its PR into `main` | `HOSTINGER_STAGE_DOMAIN`     |
+| Preview 1   | Assigned PR                           | `HOSTINGER_PREVIEW_1_DOMAIN` |
+| Preview 2   | Assigned PR                           | `HOSTINGER_PREVIEW_2_DOMAIN` |
+| Preview 3   | Assigned PR                           | `HOSTINGER_PREVIEW_3_DOMAIN` |
+
+Create five websites on the Business plan and set those repository variables to
+their hostnames, without `https://` or paths. Set `HOSTINGER_USERNAME` to the
+hosting account username, and store `HOSTINGER_API_TOKEN` as a repository secret.
+Missing or duplicate hostnames stop reconciliation before hosting changes.
+Existing automatic Hostinger Git deployments must be disabled.
+
+`.github/workflows/deploy.yml` runs checks without deployment credentials.
+After successful checks, `.github/workflows/destroy-pr.yml` reconciles all five
+environments using trusted scripts from `main`. It also runs on same-repository
+PR closure or manual dispatch. Updates are serialized. Only current successful
+checks with verification, lint and E2E jobs can release an application. Fork PRs
+are tested but never receive deployment credentials or preview slots.
+
+Preview slots are assigned in PR creation order. Existing assignments stay
+stable; additional PRs get the `Queued` label. The `stage` to `main` PR uses the
+stage site without consuming a slot. GitHub deployment statuses provide the
+environment URL; run summaries list deployed links and queued PRs. A PR must
+have current successful checks before its slot deploys. Closing a PR parks its
+site, marks its deployment inactive, releases its label and deploys the next
+checked queued PR.
+
+The reconciler manages `HOST`, `APP_ORIGIN`, `DATA_DIRECTORY`, and optional
+`GOOGLE_CLIENT_ID` and `ADMIN_EMAILS` runtime values. Set the latter two as
+repository variables when ready; leave them unset to keep Google sign-in disabled.
+It refuses to replace unknown masked runtime keys or discard existing Google/admin
+settings whose real values are not supplied. Do not configure extra runtime keys
+without extending the managed configuration first.
+
+Production and stage use `/home/USERNAME/townseeker-data/production` and
+`/home/USERNAME/townseeker-data/stage`. Each new preview assignment uses a fresh
+private directory under `/home/USERNAME/townseeker-data/preview-N/`; updates to the
+same assignment preserve it. Slot reuse never gives a PR its predecessor's data.
+Retired preview directories are retained offline for deliberate cleanup, not
+deleted by PR workflows. These directories separate application data; websites
+under one hosting account are not a security sandbox for hostile code.
+Only trusted organization code should be deployed there. Verify private-directory
+permissions, backups and single-process release behavior before production use.
+
+Run `node --test tests/previewDeployment.test.mjs` to check allocation, queuing,
+release ordering, source verification, isolation and masked-setting protection.
+The reconciler verifies live pages, health, denied anonymous sessions and either
+configured Google identity or disabled sign-in. The detailed live OAuth smoke
+suite below remains available once Google configuration is ready.
+
 ## Google sign-in and administrative access
 
 Authentication runs in the same Node.js process as the hunt application. It uses
 Google Identity Services and `google-auth-library`.
 
-Set these runtime environment variables in Hostinger:
+The reconciler sets these runtime environment variables in Hostinger:
 
 | Variable           | Value                                                                                                          |
 | ------------------ | -------------------------------------------------------------------------------------------------------------- |

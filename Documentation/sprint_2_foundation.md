@@ -50,7 +50,10 @@ API details and storage limitations.
 Feature branches start from `stage` and are reviewed into `stage`. Production
 releases reach `main` through the team's review process. GitHub checks builds,
 formatting, types, authentication, APIs, and browser behavior. Hostinger deploys
-the Node.js application after those checks pass.
+the Node.js application after those checks pass. Production and stage have
+dedicated websites; three stable PR preview websites are allocated in creation
+order with a queue. The stage PR does not consume a preview slot. A closed PR's
+site is parked before its slot is reused with a fresh private data directory.
 
 Actual Google login and deployment persistence must be verified on Hostinger
 before release. See [backup and recovery](backup_recovery.md) for offline data

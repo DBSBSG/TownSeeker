@@ -127,9 +127,13 @@ Creator requests use the verified Google ID token when present; legacy browser-c
 
 TownSeeker is maintained by DBSBSG and runs as a Node.js application on Hostinger.
 The deployment workflow in `.github/workflows/deploy.yml` runs lint, formatting,
-TypeScript, authentication tests, and the browser suite before deploying `main`.
-PRs are checked without creating cloud preview environments. Closing a PR only
-clears retired preview labels.
+TypeScript, authentication tests, preview orchestration tests, and the browser suite.
+Successful checks trigger the trusted reconciler on `main`, which deploys five
+separate Hostinger websites: production, stage, and three queued PR preview slots.
+The stage PR uses the stage site. Slot labels persist across PR updates; excess
+PRs queue in creation order. Closing a PR parks its site, marks the deployment
+inactive and releases its slot. Each new assignment uses a fresh data directory;
+retired private test data is retained for deliberate offline cleanup.
 
 Configure deployment credentials and runtime settings as described in the
 [README](../README.md). `deploy/deploy.sh` submits a managed Node.js build through
@@ -142,9 +146,10 @@ permissions and back it up. One Node.js process owns a data directory; replicas
 need a transactional storage design first. A local process restart preserves data,
 but an actual Hostinger redeployment/restore must be verified before launch.
 
-Post-deployment smoke checks use real HTTP requests to verify pages, assets,
-Google client configuration, secure nonce cookies, and unauthenticated access
-controls. They do not create test hunts or accounts in production. A successful
+The reconciler checks pages, health, Google configuration (or disabled sign-in)
+and denied anonymous sessions over HTTPS. The optional live OAuth smoke suite
+also checks assets, secure nonce cookies, and invalid/cross-origin login.
+Neither creates test hunts or accounts in production. A successful
 real Google login, end-to-end hunt completion, and persistent data across an actual
 redeployment are separate release checks.
 
