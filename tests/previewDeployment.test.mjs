@@ -7,6 +7,7 @@ import {
   isStage,
   runtimeVariables,
   reconcile,
+  deploymentComment,
 } from "../deploy/preview-slots.mjs";
 
 const repository = "DBSBSG/TownSeeker";
@@ -193,10 +194,13 @@ function fixture({
   advance = false,
   failedPark = false,
   branchRuns = false,
+  initialComments = [],
+  failDeploy = false,
   pulls = [pull(1)],
 } = {}) {
   const calls = [];
   const commands = [];
+  const comments = structuredClone(initialComments);
   const deployments = previous
     ? [{ ...previous, environment: "preview-1" }]
     : [];
@@ -242,6 +246,29 @@ function fixture({
             "preview-slot-3",
           ].map((name) => ({ name })),
         );
+      if (/^\/issues\/\d+\/comments$/.test(path)) {
+        const number = Number(path.split("/")[2]);
+        if (method === "GET")
+          return response(
+            comments.filter((item) => item.issue_number === number),
+          );
+        const item = {
+          id: 1000 + comments.length,
+          issue_number: number,
+          body: body.body,
+          user: { login: "github-actions[bot]", type: "Bot" },
+        };
+        comments.push(item);
+        return response(item);
+      }
+      if (/^\/issues\/comments\/\d+$/.test(path) && method === "PATCH") {
+        const item = comments.find(
+          (item) => item.id === Number(path.split("/")[3]),
+        );
+        assert(item, "Cannot update an unknown comment");
+        item.body = body.body;
+        return response(item);
+      }
       if (path.startsWith("/issues/")) return response({});
       if (path === "/actions/workflows/deploy.yml/runs")
         return response({
@@ -328,10 +355,13 @@ function fixture({
     commands,
     deployments,
     statuses,
+    comments,
     dependencies: {
       fetch: fakeFetch,
       command: async (binary, args, childEnv) => {
         commands.push({ binary, args, env: childEnv });
+        if (failDeploy && binary === "bash")
+          throw new Error("Mock build failure");
       },
     },
   };
@@ -437,4 +467,109 @@ test("a changed PR head cannot reach a hosting write", async () => {
   const f = fixture({ advance: true });
   await assert.rejects(reconcile(env, f.dependencies), /obsolete/);
   assert(!f.calls.some((c) => c.method === "PUT"));
+});
+
+test("preview comments show the assigned hostname, label and verified revision", async () => {
+  const f = fixture();
+  await reconcile(env, f.dependencies);
+  assert.equal(f.comments.length, 1);
+  assert.match(f.comments[0].body, /Label:\*\* `preview-slot-1`/);
+  assert.match(
+    f.comments[0].body,
+    /\[pr1.example.com\]\(https:\/\/pr1.example.com\/\)/,
+  );
+  assert.match(f.comments[0].body, /Ready — deployment and live checks passed/);
+  assert.match(f.comments[0].body, new RegExp(sha.slice(0, 12)));
+  assert(
+    f.calls.some((call) => call.body?.body?.includes("Deployment in progress")),
+  );
+});
+
+test("Stage comments use only the dedicated stage hostname", async () => {
+  const stage = pull(1, ["Stage", "bug"], {
+    head: { ref: "stage", sha, repo: { full_name: repository } },
+    base: { ref: "main" },
+  });
+  const f = fixture({ pulls: [stage], branchRuns: true });
+  await reconcile(env, f.dependencies);
+  assert.equal(f.comments.length, 1);
+  assert.match(f.comments[0].body, /Label:\*\* `Stage`/);
+  assert.match(f.comments[0].body, /https:\/\/stage.example.com\//);
+  assert.doesNotMatch(
+    f.comments[0].body,
+    /pr1.example.com|main.example.com|`bug`/,
+  );
+});
+
+test("updates one bot comment without touching human comments or adding duplicates", async () => {
+  const human = {
+    id: 7,
+    issue_number: 1,
+    user: { login: "Cody0921", type: "User" },
+    body: "<!-- townseeker-deployment -->\nKeep this human comment.",
+  };
+  const f = fixture({ initialComments: [human] });
+  await reconcile(env, f.dependencies);
+  assert.equal(f.comments.length, 2);
+  assert.deepEqual(f.comments[0], human);
+  const writes = () =>
+    f.calls.filter(
+      (call) =>
+        ["POST", "PATCH"].includes(call.method) && /\/comments/.test(call.url),
+    ).length;
+  const before = writes();
+  await reconcile(env, f.dependencies);
+  assert.equal(f.comments.length, 2);
+  assert.equal(
+    writes(),
+    before,
+    "Identical ready comments need no additional writes",
+  );
+});
+
+test("waiting and queued comments never claim the current revision is deployed", async () => {
+  const f = fixture({
+    missingJob: true,
+    pulls: [pull(1), pull(2), pull(3), pull(4)],
+  });
+  await reconcile(env, f.dependencies);
+  assert.match(
+    f.comments.find((c) => c.issue_number === 1).body,
+    /Waiting for successful checks/,
+  );
+  const queued = f.comments.find((c) => c.issue_number === 4).body;
+  assert.match(queued, /Label:\*\* `Queued`/);
+  assert.doesNotMatch(queued, /\*\*Website:\*\*|Ready —/);
+  assert(f.comments.every((c) => !c.body.includes("Ready —")));
+});
+
+test("a failed deployment updates the comment to failed without exposing the error", async () => {
+  const f = fixture({ failDeploy: true });
+  await assert.rejects(reconcile(env, f.dependencies), /Mock build failure/);
+  assert.equal(f.comments.length, 1);
+  assert.match(f.comments[0].body, /Deployment failed/);
+  assert.doesNotMatch(f.comments[0].body, /Ready —|Mock build failure/);
+});
+
+test("closed comments remove active deployment links", () => {
+  const body = deploymentComment("Closed", null, "closed", sha);
+  assert.match(body, /no longer has an active deployment assignment/);
+  assert.doesNotMatch(body, /\*\*Website:\*\*/);
+});
+
+test("a queued PR's existing comment gains its website when a slot becomes available", async () => {
+  const pulls = [pull(1), pull(2), pull(3), pull(4)];
+  const f = fixture({ pulls });
+  await reconcile(env, f.dependencies);
+  const queued = f.comments.find((item) => item.issue_number === 4);
+  assert.match(queued.body, /No website is assigned yet/);
+  const id = queued.id;
+  pulls.shift();
+  await reconcile(env, f.dependencies);
+  const assigned = f.comments.filter((item) => item.issue_number === 4);
+  assert.equal(assigned.length, 1);
+  assert.equal(assigned[0].id, id);
+  assert.match(assigned[0].body, /https:\/\/pr3.example.com\//);
+  assert.match(assigned[0].body, /Ready —/);
+  assert.doesNotMatch(assigned[0].body, /`Queued`/);
 });

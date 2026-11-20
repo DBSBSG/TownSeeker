@@ -107,6 +107,33 @@ export function checkGate(runs, sha, branch, pr) {
     : null;
 }
 
+export function deploymentComment(label, domain, state, sha) {
+  const statuses = {
+    waiting:
+      "Waiting for successful checks on this revision. The website may still show an older deployment.",
+    deploying:
+      "Deployment in progress. The website is not verified for this revision yet.",
+    ready: "Ready — deployment and live checks passed for this revision.",
+    failed:
+      "Deployment failed. The website is not verified for this revision; see the reconciliation workflow logs.",
+    queued:
+      "Waiting for an available preview slot. No website is assigned yet.",
+    closed: "PR closed. This PR no longer has an active deployment assignment.",
+  };
+  if (!statuses[state]) throw new Error("Unknown deployment comment state.");
+  return [
+    "<!-- townseeker-deployment -->",
+    "### TownSeeker deployment",
+    "",
+    `**Label:** \`${label}\``,
+    `**Status:** ${statuses[state]}`,
+    ...(domain ? [`**Website:** [${domain}](https://${domain}/)`] : []),
+    ...(/^[a-f0-9]{40}$/.test(sha || "")
+      ? [`**Revision:** \`${sha.slice(0, 12)}\``]
+      : []),
+  ].join("\n");
+}
+
 function command(binary, args, env = process.env) {
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, { env, stdio: "inherit" });
@@ -168,6 +195,39 @@ export async function reconcile(env = process.env, dependencies = {}) {
   };
   const pulls = await list("/pulls?state=open&sort=created&direction=asc");
   const plan = allocateSlots(pulls, repository);
+  const comment = async (pull, label, domain, state, sha = pull.head.sha) => {
+    const body = deploymentComment(label, domain, state, sha);
+    const comments = await list(`/issues/${pull.number}/comments`);
+    // Only update our workflow bot's marked comment; never overwrite a user's text.
+    const existing = comments.find(
+      (item) =>
+        item.user?.login === "github-actions[bot]" &&
+        item.user.type === "Bot" &&
+        item.body?.startsWith("<!-- townseeker-deployment -->"),
+    );
+    if (existing?.body === body) return;
+    if (existing)
+      await gh(`/issues/comments/${existing.id}`, "PATCH", { body });
+    else await gh(`/issues/${pull.number}/comments`, "POST", { body });
+  };
+  const report = async (name, state, sha) => {
+    const recipients =
+      name === "stage"
+        ? pulls.filter(
+            (pull) => pull.head.repo?.full_name === repository && isStage(pull),
+          )
+        : plan.slots.has(name)
+          ? [plan.slots.get(name)]
+          : [];
+    for (const pull of recipients)
+      await comment(
+        pull,
+        name === "stage" ? "Stage" : `preview-slot-${name.at(-1)}`,
+        sites[name],
+        state,
+        sha ?? pull.head.sha,
+      );
+  };
   const source = async (branch, pull) => {
     if (pull) {
       const current = await gh(`/pulls/${pull.number}`);
@@ -297,7 +357,10 @@ export async function reconcile(env = process.env, dependencies = {}) {
       const statuses = await gh(
         `/deployments/${previous.id}/statuses?per_page=1`,
       );
-      if (statuses[0]?.state === "success") return previous;
+      if (statuses[0]?.state === "success") {
+        if (kind === "app") await report(name, "ready", target.sha);
+        return previous;
+      }
     }
     if (kind === "app") {
       const currentSource = target.pr
@@ -337,6 +400,7 @@ export async function reconcile(env = process.env, dependencies = {}) {
     });
     await status(record.id, "in_progress", url);
     try {
+      if (kind === "app") await report(name, "deploying", target.sha);
       await host(domain, "/builds/settings/env", "PUT", { env_vars: runtime });
       const childEnv = {
         ...env,
@@ -350,6 +414,7 @@ export async function reconcile(env = process.env, dependencies = {}) {
       await run("bash", ["deploy/deploy.sh"], childEnv);
       await smoke(domain, kind === "park");
       await status(record.id, "success", url);
+      if (kind === "app") await report(name, "ready", target.sha);
       await summary(
         `- ${name}${target.pr ? ` (PR #${target.pr})` : ""}: ${url}${kind === "park" ? " — parked" : ""}`,
       );
@@ -367,6 +432,11 @@ export async function reconcile(env = process.env, dependencies = {}) {
     } catch (error) {
       failures.push(`${label}: ${error.message}`);
       await summary(`- ${label} failed: ${error.message}`);
+      try {
+        await report(label === "main" ? "production" : label, "failed");
+      } catch (commentError) {
+        failures.push(`${label} comment: ${commentError.message}`);
+      }
     }
   };
   // Park released/reassigned slots BEFORE changing their labels or runtime data.
@@ -457,8 +527,10 @@ export async function reconcile(env = process.env, dependencies = {}) {
       if (
         closed.state === "closed" &&
         closed.head.repo?.full_name === repository
-      )
+      ) {
         await updateLabels(closed, []);
+        await comment(closed, "Closed", null, "closed");
+      }
     }
   }
   for (const branch of ["main", "stage"])
@@ -471,10 +543,16 @@ export async function reconcile(env = process.env, dependencies = {}) {
           "app",
           `/home/${env.HOSTINGER_USERNAME}/townseeker-data/${branch === "main" ? "production" : "stage"}`,
         );
-      else
+      else {
         await summary(
           `- ${branch}: waiting for successful checks on ${target.sha.slice(0, 12)}.`,
         );
+        await report(
+          branch === "main" ? "production" : "stage",
+          "waiting",
+          target.sha,
+        );
+      }
     });
   for (const [name, pull] of plan.slots)
     await attempt(name, async () => {
@@ -483,6 +561,7 @@ export async function reconcile(env = process.env, dependencies = {}) {
         await summary(
           `- PR #${pull.number}: waiting for current successful checks.`,
         );
+        if (target) await report(name, "waiting", target.sha);
         return;
       }
       const previous = await latest(name);
@@ -492,8 +571,10 @@ export async function reconcile(env = process.env, dependencies = {}) {
           : `/home/${env.HOSTINGER_USERNAME}/townseeker-data/${name}/pr-${pull.number}-${randomUUID()}`;
       await deploy(name, target, "app", directory);
     });
-  for (const pull of plan.queued)
+  for (const pull of plan.queued) {
     await summary(`- PR #${pull.number}: queued for a preview slot.`);
+    await comment(pull, "Queued", null, "queued");
+  }
   if (failures.length) throw new Error(failures.join("\n"));
 }
 
