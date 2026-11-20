@@ -51,14 +51,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts --config.node-linker=hoisted
-      # Disable Hostinger automatic push deployments so checks gate releases.
-      - name: Build and deploy Node.js application on Hostinger
+      # Upload the tested commit directly; Hostinger Git import is not required.
+      - name: Upload source archive and deploy Node.js application on Hostinger
         id: release
         env:
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
           HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME }}
           HOSTINGER_DOMAIN: ${{ vars.HOSTINGER_DOMAIN }}
-          HOSTINGER_GIT_INSTALLATION_UUID: ${{ vars.HOSTINGER_GIT_INSTALLATION_UUID }}
         run: bash deploy/deploy.sh
       - name: Verify deployed pages, APIs, and authentication
         if: steps.release.outputs.site_url != ''
