@@ -27,10 +27,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts --config.node-linker=hoisted
-      - run: pnpm exec tsc --noEmit
+      - run: pnpm build
       - run: pnpm check:admin
       - run: pnpm test:admin
       - run: node --check server/dataBackup.mjs
       - run: node --test tests/previewDeployment.test.mjs
-      - run: pnpm exec prettier --check deploy/preview-slots.mjs tests/previewDeployment.test.mjs .github/workflows/deploy.yml .github/workflows/destroy-pr.yml
+      - run: node --test tests/hostingerStartup.test.mjs
+      - run: pnpm exec prettier --check deploy/preview-slots.mjs tests/previewDeployment.test.mjs tests/hostingerStartup.test.mjs .github/workflows/deploy.yml .github/workflows/destroy-pr.yml
       - run: bash -n deploy/deploy.sh

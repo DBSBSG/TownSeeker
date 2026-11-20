@@ -45,7 +45,7 @@ work_directory=$(mktemp -d)
 trap 'rm -f "$work_directory/app.zip" "$work_directory/upload.headers" "$work_directory/package.json" "$work_directory/park.cjs"; rmdir "$work_directory"' EXIT
 archive_name="townseeker-${DEPLOY_SHA}-$(date -u +%Y%m%d%H%M%S).zip"
 # Allow only runtime source and build inputs, never local data, .env or dependencies.
-entry_file=src/js/server/server.js
+entry_file=src/js/server/hostinger.js
 if [[ "${DEPLOY_KIND:-app}" == park ]]; then
   command -v zip >/dev/null || { echo 'Required command not found: zip' >&2; exit 1; }
   [[ "$DEPLOY_ENVIRONMENT" =~ ^preview-[123]$ ]] || { echo 'Only preview sites may be parked.' >&2; exit 1; }
