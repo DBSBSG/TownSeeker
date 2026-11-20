@@ -125,13 +125,20 @@ export async function resultsPdf(results: HuntResults): Promise<Uint8Array> {
   document.setTitle(`${results.hunt.name} - Hunt results`);
   const font = await document.embedFont(StandardFonts.Helvetica);
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
-  const ink = rgb(0.09, 0.2, 0.3);
+  const ink = rgb(0.17, 0.09, 0.04);
   let page: PDFPage;
   let y = 0;
   const margin = 36;
   const width = 720;
   const newPage = () => {
     page = document.addPage([792, 612]);
+    page.drawRectangle({
+      x: margin,
+      y: 590,
+      width,
+      height: 4,
+      color: rgb(0.94, 0.47, 0.09),
+    });
     y = 570;
     page.drawText("TOWNSEEKER / RESULTS EXPORT", {
       x: margin,
@@ -202,7 +209,7 @@ export async function resultsPdf(results: HuntResults): Promise<Uint8Array> {
           y: y - 10,
           size: 9,
           font: bold,
-          color: rgb(1, 1, 1),
+          color: rgb(1, 0.94, 0.82),
         });
         x += widths[i];
       });
@@ -241,7 +248,7 @@ export async function resultsPdf(results: HuntResults): Promise<Uint8Array> {
           y: y - height,
           width: widths[i],
           height,
-          color: row % 2 === 0 ? rgb(0.94, 0.96, 0.98) : rgb(1, 1, 1),
+          color: row % 2 === 0 ? rgb(1, 0.96, 0.87) : rgb(1, 1, 1),
         });
         cell.forEach((line, j) =>
           page.drawText(line, {
