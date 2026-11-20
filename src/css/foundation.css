@@ -758,6 +758,8 @@ body[data-page="home"] #admin-login {
 }
 body[data-page="home"] #google-sign-in {
   min-height: 2.75rem;
+  /* Match Google's light iframe so its transparent edges stay transparent. */
+  color-scheme: light;
 }
 body[data-page="home"] #admin-status {
   min-height: 1rem;
