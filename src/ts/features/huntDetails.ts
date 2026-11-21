@@ -13,6 +13,7 @@ import {
   request,
 } from "./huntRepository.js";
 import { populateOrganizationSelect } from "./organizationManager.js";
+import { confirmAction } from "./confirmationDialog.js";
 
 import { mountKahootHost } from "./kahootHunt.js";
 import { mountAdminIssues } from "./huntIssues.js";
@@ -280,7 +281,7 @@ dialog?.addEventListener("click", async (event) => {
       : action === "ban"
         ? "Ban this player from the hunt? They will not be able to rejoin."
         : "Unban this player from the hunt? They will be able to join again.";
-  if (!window.confirm(confirmation)) return;
+  if (!(await confirmAction(confirmation))) return;
   const requestId = activeRequest;
   const status = dialog?.querySelector<HTMLElement>(
     '[data-testid="participant-progress-status"]',

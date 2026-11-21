@@ -1,4 +1,5 @@
 import type { HuntRepository } from "../foundation/contracts.js";
+import { confirmAction } from "./confirmationDialog.js";
 import type { TaskDefinition, TaskInput } from "../foundation/types.js";
 
 interface MapPoint {
@@ -547,7 +548,7 @@ export function mountDefineTask(
       return;
     }
     if (button.dataset.taskAction !== "delete") return;
-    if (!window.confirm(`Delete “${task.displayLabel}” from this hunt?`))
+    if (!(await confirmAction(`Delete “${task.displayLabel}” from this hunt?`)))
       return;
 
     const huntId = huntInput?.value.trim() ?? "";
