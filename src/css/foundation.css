@@ -768,13 +768,6 @@ body[data-page="home"] #admin-status {
   font-size: 0.75rem;
   line-height: 1.4;
 }
-body[data-page="home"] .sign-in-privacy {
-  margin: 0.65rem 0 0;
-  padding-top: 0.65rem;
-  border-top: 1px solid rgb(255 255 255 / 8%);
-  color: #b09365;
-  font-size: 0.68rem;
-}
 body[data-page="home"] .adventure-art {
   position: relative;
   min-height: 31rem;
@@ -979,6 +972,56 @@ body[data-page="home"] .map-star {
   font-size: 1.1rem;
   text-shadow: 0 0 16px rgb(255 194 105 / 80%);
 }
+body[data-page="home"] .campfire {
+  position: absolute;
+  z-index: 2;
+  bottom: 23%;
+  left: 53%;
+  width: 2rem;
+  height: 2rem;
+  filter: drop-shadow(0 0 0.45rem rgb(240 120 24 / 35%));
+}
+body[data-page="home"] .campfire::before,
+body[data-page="home"] .campfire::after {
+  position: absolute;
+  content: "";
+}
+body[data-page="home"] .campfire::before {
+  bottom: 0.3rem;
+  left: 0.7rem;
+  width: 0.75rem;
+  height: 1.2rem;
+  border-radius: 70% 15% 55% 50%;
+  background: linear-gradient(150deg, #ffe5a0 0%, #ffae24 45%, #e84c18 100%);
+  transform: rotate(38deg);
+  transform-origin: 50% 90%;
+}
+body[data-page="home"] .campfire::after {
+  right: -0.2rem;
+  bottom: -0.15rem;
+  left: -0.2rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: rgb(240 120 24 / 25%);
+  filter: blur(0.4rem);
+}
+body[data-page="home"] .campfire i,
+body[data-page="home"] .campfire b {
+  position: absolute;
+  z-index: 1;
+  bottom: 0.15rem;
+  left: 0.35rem;
+  width: 1.15rem;
+  height: 0.22rem;
+  border: 1px solid #a95722;
+  border-radius: 999px;
+  background: #704023;
+  transform: rotate(24deg);
+}
+body[data-page="home"] .campfire b {
+  left: 0.45rem;
+  transform: rotate(-24deg);
+}
 body[data-page="home"] .star-one {
   top: 35%;
   left: 65%;
@@ -1175,6 +1218,30 @@ body[data-page="home"] button:focus-visible {
     }
     50% {
       translate: 0 -5px;
+    }
+  }
+  body[data-page="home"] .campfire::before {
+    animation: campfire-flicker 1.35s ease-in-out infinite alternate;
+  }
+  body[data-page="home"] .campfire::after {
+    animation: campfire-glow 1.8s ease-in-out infinite alternate;
+  }
+  @keyframes campfire-flicker {
+    from {
+      transform: rotate(34deg) scale(0.94, 0.95);
+    }
+    to {
+      transform: rotate(44deg) scale(1.04, 1.08);
+    }
+  }
+  @keyframes campfire-glow {
+    from {
+      opacity: 0.65;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1.1);
     }
   }
 }
