@@ -560,7 +560,7 @@ test("Google sign-in lets a player open and revisit saved progress", async ({
   );
   await expect(futureCard.locator(".hunt-state-badge")).toHaveCSS(
     "color",
-    "rgb(139, 188, 255)",
+    "rgb(255, 193, 106)",
   );
   const pastCard = page
     .getByTestId("player-past-hunt-list")
@@ -581,7 +581,7 @@ test("Google sign-in lets a player open and revisit saved progress", async ({
   );
   await expect(tasklessCard.locator(".hunt-state-badge")).toHaveCSS(
     "color",
-    "rgb(139, 188, 255)",
+    "rgb(255, 193, 106)",
   );
   await expect(page.getByTestId("player-future-hunt-list")).toContainText(
     "Starts in",

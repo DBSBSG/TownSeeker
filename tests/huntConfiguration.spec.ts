@@ -827,8 +827,29 @@ test("create hunt, save task and reload configuration", async ({ page }) => {
     "The Blue Fountain",
   );
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("delete-task").click();
+  const confirmation = page.getByRole("dialog", { name: "Confirm action" });
+  await expect(confirmation).toContainText("The Blue Fountain");
+  await expect(
+    confirmation.getByRole("button", { name: "Cancel" }),
+  ).toBeFocused();
+  await confirmation.getByRole("button", { name: "Cancel" }).click();
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.getByTestId("defined-task-list")).toContainText(
+    "The Blue Fountain",
+  );
+  await expect(page.getByTestId("delete-task")).toBeFocused();
+  await page.getByTestId("delete-task").click();
+  await expect(confirmation).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.getByTestId("defined-task-list")).toContainText(
+    "The Blue Fountain",
+  );
+  await page.getByTestId("delete-task").click();
+  await confirmation
+    .getByRole("button", { name: "Confirm", exact: true })
+    .click();
   await expect(page.getByTestId("task-status")).toContainText(
     "was deleted from this hunt",
   );
@@ -918,12 +939,18 @@ test("hunt owners, officers, and contributors get their assigned workspace permi
   ).toContainText("Baja");
   await expect(page.getByTestId("kick-participant")).toHaveCount(2);
   await expect(page.getByTestId("ban-participant")).toHaveCount(2);
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("kick-participant").first().click();
+  await page
+    .getByRole("dialog", { name: "Confirm action" })
+    .getByRole("button", { name: "Confirm", exact: true })
+    .click();
   await expect(page.getByTestId("participant-progress-row")).toHaveCount(1);
   expect(moderationAction).toEqual({ participantId, action: "kick" });
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("ban-participant").click();
+  await page
+    .getByRole("dialog", { name: "Confirm action" })
+    .getByRole("button", { name: "Confirm", exact: true })
+    .click();
   await expect(page.getByTestId("participant-progress-empty")).toBeVisible();
   await expect(page.getByTestId("banned-participant-row")).toContainText(
     "Morgan",
@@ -932,8 +959,11 @@ test("hunt owners, officers, and contributors get their assigned workspace permi
     participantId: secondParticipantId,
     action: "ban",
   });
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByTestId("unban-participant").click();
+  await page
+    .getByRole("dialog", { name: "Confirm action" })
+    .getByRole("button", { name: "Confirm", exact: true })
+    .click();
   await expect(page.getByTestId("banned-participant-empty")).toBeVisible();
   await expect(page.getByTestId("participant-progress-row")).toContainText(
     "Morgan",
