@@ -6,6 +6,10 @@ These instructions apply to the entire repository.
 
 The purpose of this policy is to prevent Codex from making broad or incidental changes outside the files that the developer explicitly wants changed.
 
+## Codex Model Preference
+
+When Codex exposes a model selector, use GPT-6 Luna for work in this repository, including delegated work. Do not switch to another model unless the developer explicitly requests it. Repository instructions cannot override a model fixed by the Codex app or session; if GPT-6 Luna is unavailable, tell the developer that the model must be selected in the app or session settings rather than claiming this file enforced it.
+
 ## Core Rule: Repository Is Read-Only by Default
 
 Treat the entire repository as READ-ONLY unless the developer explicitly authorizes a file path for modification in the current request.
