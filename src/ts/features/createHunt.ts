@@ -72,8 +72,7 @@ const huntTemplates = {
   },
   trivia: {
     name: "Team Trivia",
-    description:
-      "Bring people together for a hosted series of quick questions and shared discoveries.",
+    description: "A LIVE host-led round of quick questions.",
     huntType: "kahoot",
     maxParticipants: "200",
     taskOrderMode: "sequential",

@@ -3734,7 +3734,7 @@ body[data-page="admin"] .hunt-template-copy > span {
 }
 body[data-page="admin"] .hunt-template-clear {
   min-height: 2rem;
-  margin: 0.55rem 0 0;
+  margin: 1rem 0 0;
   padding: 0.35rem 0.65rem;
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 0.5rem;
@@ -3744,6 +3744,9 @@ body[data-page="admin"] .hunt-template-clear {
 }
 body[data-page="admin"] .hunt-template-clear[hidden] {
   display: none;
+}
+body[data-page="admin"] .create-hunt-dialog button[type="submit"] {
+  margin-top: 1rem;
 }
 @media (max-width: 520px) {
   body[data-page="admin"] .hunt-template-grid {

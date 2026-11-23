@@ -193,7 +193,7 @@ function countdownText(hunt: PlayerHunt, now: number): string {
       ? "Hunt complete"
       : hunt.kahoot?.phase === "lobby"
         ? "Waiting for host"
-        : "Live Kahoot Hunt";
+        : "Live Trivia Hunt";
   const phase = huntPhase(hunt, now);
   if (phase === "past") return "Hunt Ended";
   if (phase === "future")
@@ -225,7 +225,7 @@ function huntStatusPresentation(
           : phase === "future"
             ? "Lobby"
             : "Live",
-      message: "Kahoot Hunt",
+      message: "Live Trivia Hunt",
     };
   if (phase === "past") {
     return {
@@ -1584,7 +1584,7 @@ export function mountDisplayTasks(
         huntDescription.textContent = hunt.description;
         if (hunt.organizationName)
           addFact("Organization", hunt.organizationName);
-        huntStatus.textContent = "Kahoot Hunt";
+        huntStatus.textContent = "Live Trivia Hunt";
         const panel = document.createElement("section");
         panel.dataset.testid = "kahoot-player";
         panel.className = "kahoot-panel";

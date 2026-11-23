@@ -571,7 +571,7 @@
                       </span>
                       <span class="hunt-template-copy">
                         <strong>Team Trivia</strong>
-                        <span>A host-led round of quick questions.</span>
+                        <span>A LIVE host-led round of quick questions.</span>
                       </span>
                     </button>
                   </div>
@@ -589,7 +589,7 @@
                 <label for="hunt-type">Hunt type</label
                 ><select id="hunt-type" name="huntType">
                   <option value="traditional">Traditional Hunt</option>
-                  <option value="kahoot">Kahoot Hunt</option>
+                  <option value="kahoot">Live Trivia Hunt</option>
                 </select>
                 <label for="hunt-capacity"
                   >Maximum participants (default 200; up to 200)</label
@@ -650,9 +650,7 @@
                 <button type="submit">Create hunt</button>
               </fieldset>
             </form>
-            <p role="status" data-testid="hunt-status">
-              Enter hunt details to begin.
-            </p>
+            <p role="status" data-testid="hunt-status"></p>
           </section>
         </dialog>
         <dialog
@@ -783,7 +781,7 @@
               data-testid="kahoot-host"
               class="kahoot-panel"
               hidden
-              aria-label="Kahoot host controls"
+              aria-label="Live trivia host controls"
             ></section>
             <form
               data-testid="hunt-settings-form"
@@ -1285,7 +1283,7 @@
                     <div class="field-grid">
                       <div>
                         <label for="task-timer"
-                          >Kahoot question timer in seconds (optional)</label
+                          >Trivia question timer in seconds (optional)</label
                         ><input
                           id="task-timer"
                           name="timeLimitSeconds"

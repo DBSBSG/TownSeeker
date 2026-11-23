@@ -695,7 +695,7 @@ export function createApplication(options: ServerOptions = {}) {
             )
               throw new StoreError(
                 "forbidden",
-                "This Kahoot Hunt has already started. New players cannot join.",
+                "This Live Trivia Hunt has already started. New players cannot join.",
               );
             await accountProgress.join(player, hunt.id, {
               closed: current.participationClosed,
@@ -1498,7 +1498,7 @@ export function createApplication(options: ServerOptions = {}) {
           )
             throw new StoreError(
               "forbidden",
-              "Questions cannot be changed after a Kahoot Hunt starts.",
+              "Questions cannot be changed after a Live Trivia Hunt starts.",
             );
           if (taskMatch && method === "PATCH") {
             if (!canEdit) {
@@ -1520,7 +1520,7 @@ export function createApplication(options: ServerOptions = {}) {
                   )
                     throw new StoreError(
                       "forbidden",
-                      "Questions cannot be changed after a Kahoot Hunt starts.",
+                      "Questions cannot be changed after a Live Trivia Hunt starts.",
                     );
                   return hunts.updateTask(hunt.id, taskMatch[2], input);
                 });
@@ -1546,7 +1546,7 @@ export function createApplication(options: ServerOptions = {}) {
                 )
                   throw new StoreError(
                     "forbidden",
-                    "Questions cannot be changed after a Kahoot Hunt starts.",
+                    "Questions cannot be changed after a Live Trivia Hunt starts.",
                   );
                 return hunts.deleteTask(hunt.id, taskMatch[2]);
               }),
@@ -1663,7 +1663,7 @@ export function createApplication(options: ServerOptions = {}) {
                   )
                     throw new StoreError(
                       "forbidden",
-                      "Questions cannot be changed after a Kahoot Hunt starts.",
+                      "Questions cannot be changed after a Live Trivia Hunt starts.",
                     );
                   return hunts.addTask(hunt.id, input);
                 });
