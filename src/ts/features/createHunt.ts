@@ -85,8 +85,11 @@ export function mountCreateHunt(
   const organizationSelect = form?.querySelector<HTMLSelectElement>(
     '[name="organizationId"]',
   );
-  const templateSelect = form?.querySelector<HTMLSelectElement>(
-    '[name="templateId"]',
+  const templateCards = form?.querySelectorAll<HTMLButtonElement>(
+    "[data-hunt-template]",
+  );
+  const clearTemplateButton = form?.querySelector<HTMLButtonElement>(
+    '[data-testid="clear-hunt-template"]',
   );
   const organizationThemeField = form?.querySelector<HTMLElement>(
     '[data-testid="organization-hunt-theme-field"]',
@@ -118,31 +121,46 @@ export function mountCreateHunt(
   };
   organizationSelect?.addEventListener("change", updateOrganizationThemeField);
   updateOrganizationThemeField();
-  templateSelect?.addEventListener("change", () => {
-    if (!templateSelect.value) {
-      (form.elements.namedItem("name") as HTMLInputElement).value = "";
-      (form.elements.namedItem("description") as HTMLTextAreaElement).value =
-        "";
-      (form.elements.namedItem("huntType") as HTMLSelectElement).value =
-        "traditional";
-      (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
-        "200";
-      (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
-        "sequential";
-      return;
-    }
-    const template =
-      huntTemplates[templateSelect.value as keyof typeof huntTemplates];
-    if (!template) return;
-    (form.elements.namedItem("name") as HTMLInputElement).value = template.name;
-    (form.elements.namedItem("description") as HTMLTextAreaElement).value =
-      template.description;
+  const resetTemplateFields = (): void => {
+    (form.elements.namedItem("name") as HTMLInputElement).value = "";
+    (form.elements.namedItem("description") as HTMLTextAreaElement).value = "";
     (form.elements.namedItem("huntType") as HTMLSelectElement).value =
-      template.huntType;
+      "traditional";
     (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
-      template.maxParticipants;
+      "200";
     (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
-      template.taskOrderMode;
+      "sequential";
+  };
+  const clearTemplateChoice = (): void => {
+    templateCards?.forEach((card) =>
+      card.setAttribute("aria-pressed", "false"),
+    );
+    if (clearTemplateButton) clearTemplateButton.hidden = true;
+  };
+  templateCards?.forEach((card) => {
+    card.addEventListener("click", () => {
+      const template =
+        huntTemplates[card.dataset.huntTemplate as keyof typeof huntTemplates];
+      if (!template) return;
+      templateCards.forEach((item) =>
+        item.setAttribute("aria-pressed", String(item === card)),
+      );
+      if (clearTemplateButton) clearTemplateButton.hidden = false;
+      (form.elements.namedItem("name") as HTMLInputElement).value =
+        template.name;
+      (form.elements.namedItem("description") as HTMLTextAreaElement).value =
+        template.description;
+      (form.elements.namedItem("huntType") as HTMLSelectElement).value =
+        template.huntType;
+      (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
+        template.maxParticipants;
+      (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
+        template.taskOrderMode;
+    });
+  });
+  clearTemplateButton?.addEventListener("click", () => {
+    resetTemplateFields();
+    clearTemplateChoice();
   });
   const workspaceStatus = document.querySelector<HTMLElement>(
     '[data-testid="creator-status"]',
@@ -771,6 +789,7 @@ export function mountCreateHunt(
       select({ id: result.value.id, name: result.value.name, role: "owner" });
       huntsLoaded = false;
       form.reset();
+      clearTemplateChoice();
       updateOrganizationThemeField();
       createDialog.close();
       showManagerView();
