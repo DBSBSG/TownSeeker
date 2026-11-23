@@ -1,5 +1,5 @@
 import type { HuntRepository } from "../foundation/contracts.js";
-import type { HuntRole } from "../foundation/types.js";
+import type { HuntCardTheme, HuntRole } from "../foundation/types.js";
 import { getCreatorSession, request } from "./huntRepository.js";
 import { openHuntDetails } from "./huntDetails.js";
 import { populateOrganizationSelect } from "./organizationManager.js";
@@ -42,6 +42,41 @@ const huntFilterNotes: Record<HuntListFilter, string> = {
   shared: "Showing hunts shared with you, most recently edited first.",
 };
 
+const huntTemplates = {
+  community: {
+    name: "Community Explorer",
+    description:
+      "Explore local places, meet the people behind them, and discover something new along the way.",
+    huntType: "traditional",
+    maxParticipants: "200",
+    taskOrderMode: "sequential",
+  },
+  campus: {
+    name: "Campus Welcome",
+    description:
+      "Help new arrivals find useful campus locations, familiar landmarks, and places to connect.",
+    huntType: "traditional",
+    maxParticipants: "200",
+    taskOrderMode: "sequential",
+  },
+  downtown: {
+    name: "Downtown Discovery",
+    description:
+      "Explore downtown businesses and public spaces while learning what makes the area special.",
+    huntType: "traditional",
+    maxParticipants: "200",
+    taskOrderMode: "any",
+  },
+  trivia: {
+    name: "Team Trivia",
+    description:
+      "Bring people together for a hosted series of quick questions and shared discoveries.",
+    huntType: "kahoot",
+    maxParticipants: "200",
+    taskOrderMode: "sequential",
+  },
+} as const;
+
 export function mountCreateHunt(
   root: HTMLElement,
   repository: HuntRepository,
@@ -49,6 +84,12 @@ export function mountCreateHunt(
   const form = root.querySelector<HTMLFormElement>('[data-testid="hunt-form"]');
   const organizationSelect = form?.querySelector<HTMLSelectElement>(
     '[name="organizationId"]',
+  );
+  const templateSelect = form?.querySelector<HTMLSelectElement>(
+    '[name="templateId"]',
+  );
+  const organizationThemeField = form?.querySelector<HTMLElement>(
+    '[data-testid="organization-hunt-theme-field"]',
   );
   const status = root.querySelector<HTMLElement>('[data-testid="hunt-status"]');
   const createDialog = document.querySelector<HTMLDialogElement>(
@@ -71,6 +112,38 @@ export function mountCreateHunt(
   );
   if (!form || !status || !createDialog || !manageDialog || !managerView)
     return;
+  const updateOrganizationThemeField = (): void => {
+    if (organizationThemeField)
+      organizationThemeField.hidden = !organizationSelect?.value;
+  };
+  organizationSelect?.addEventListener("change", updateOrganizationThemeField);
+  updateOrganizationThemeField();
+  templateSelect?.addEventListener("change", () => {
+    if (!templateSelect.value) {
+      (form.elements.namedItem("name") as HTMLInputElement).value = "";
+      (form.elements.namedItem("description") as HTMLTextAreaElement).value =
+        "";
+      (form.elements.namedItem("huntType") as HTMLSelectElement).value =
+        "traditional";
+      (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
+        "200";
+      (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
+        "sequential";
+      return;
+    }
+    const template =
+      huntTemplates[templateSelect.value as keyof typeof huntTemplates];
+    if (!template) return;
+    (form.elements.namedItem("name") as HTMLInputElement).value = template.name;
+    (form.elements.namedItem("description") as HTMLTextAreaElement).value =
+      template.description;
+    (form.elements.namedItem("huntType") as HTMLSelectElement).value =
+      template.huntType;
+    (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
+      template.maxParticipants;
+    (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
+      template.taskOrderMode;
+  });
   const workspaceStatus = document.querySelector<HTMLElement>(
     '[data-testid="creator-status"]',
   )!;
@@ -661,6 +734,7 @@ export function mountCreateHunt(
     const text = (key: string) => String(fields.get(key) ?? "").trim();
     const date = (key: string) =>
       text(key) ? new Date(text(key)).toISOString() : null;
+    const organizationId = text("organizationId");
     const button = form.querySelector<HTMLButtonElement>(
       'button[type="submit"]',
     );
@@ -669,7 +743,10 @@ export function mountCreateHunt(
     try {
       const result = await repository.createHunt({
         name: text("name"),
-        organizationId: text("organizationId") || null,
+        organizationId: organizationId || null,
+        ...(organizationId
+          ? { cardTheme: text("cardTheme") as HuntCardTheme }
+          : {}),
         huntType: text("huntType") === "kahoot" ? "kahoot" : "traditional",
         maxParticipants: text("maxParticipants")
           ? Number(text("maxParticipants"))
@@ -694,6 +771,7 @@ export function mountCreateHunt(
       select({ id: result.value.id, name: result.value.name, role: "owner" });
       huntsLoaded = false;
       form.reset();
+      updateOrganizationThemeField();
       createDialog.close();
       showManagerView();
     } catch {

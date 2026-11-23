@@ -341,6 +341,22 @@
             <form data-testid="hunt-form">
               <fieldset>
                 <legend>Hunt details</legend>
+                <label for="hunt-template">Start from a template</label
+                ><select
+                  id="hunt-template"
+                  name="templateId"
+                  data-testid="hunt-template"
+                >
+                  <option value="">Blank hunt</option>
+                  <option value="community">Community Explorer</option>
+                  <option value="campus">Campus Welcome</option>
+                  <option value="downtown">Downtown Discovery</option>
+                  <option value="trivia">Team Trivia</option>
+                </select>
+                <p class="field-help">
+                  Templates prefill the setup fields; customize them before
+                  creating your hunt.
+                </p>
                 <label for="hunt-name">Hunt name</label
                 ><input id="hunt-name" name="name" required />
                 <label for="hunt-type">Hunt type</label
@@ -368,6 +384,23 @@
                   <option value="">No organization</option>
                 </select>
                 <p class="field-help">Choose an organization you belong to.</p>
+                <div
+                  class="organization-hunt-theme-field"
+                  data-testid="organization-hunt-theme-field"
+                  hidden
+                >
+                  <label for="hunt-card-theme">Hunt info background</label>
+                  <select id="hunt-card-theme" name="cardTheme">
+                    <option value="ember">Ember trail</option>
+                    <option value="forest">Forest path</option>
+                    <option value="coastal">Coastal route</option>
+                    <option value="sunset">Sunset trail</option>
+                  </select>
+                  <p class="field-help">
+                    Choose a faded gradient for this hunt’s name on player
+                    dashboards.
+                  </p>
+                </div>
                 <label for="hunt-description">Description</label
                 ><textarea
                   id="hunt-description"

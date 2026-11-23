@@ -340,6 +340,7 @@ export function createApplication(options: ServerOptions = {}) {
         id: hunt.id,
         name: hunt.name,
         description: hunt.description,
+        ...(hunt.cardTheme ? { cardTheme: hunt.cardTheme } : {}),
         organizationId: hunt.organizationId,
         organizationName: hunt.organizationId
           ? ((await organizations.organizationNameById(hunt.organizationId)) ??
@@ -368,6 +369,7 @@ export function createApplication(options: ServerOptions = {}) {
     return {
       id: hunt.id,
       name: hunt.name,
+      ...(hunt.cardTheme ? { cardTheme: hunt.cardTheme } : {}),
       organizationId: hunt.organizationId,
       organizationName: hunt.organizationId
         ? ((await organizations.organizationNameById(hunt.organizationId)) ??

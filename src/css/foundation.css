@@ -2892,6 +2892,30 @@ body[data-page="player"] .past-hunt-filter select:focus-visible {
   text-align: left;
   cursor: pointer;
 }
+.player-hunt .player-hunt-open[data-theme="ember"] {
+  border: 1px solid rgb(255 174 36 / 18%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(232 76 24 / 32%), transparent 88%);
+}
+.player-hunt .player-hunt-open[data-theme="forest"] {
+  border: 1px solid rgb(111 176 112 / 20%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(66 120 75 / 34%), transparent 88%);
+}
+.player-hunt .player-hunt-open[data-theme="coastal"] {
+  border: 1px solid rgb(105 177 204 / 20%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(53 123 158 / 34%), transparent 88%);
+}
+.player-hunt .player-hunt-open[data-theme="sunset"] {
+  border: 1px solid rgb(244 148 119 / 20%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(181 75 91 / 34%), transparent 88%);
+}
 .player-hunt .player-hunt-open:focus-visible {
   outline: 2px solid var(--ts-gold);
   outline-offset: 3px;

@@ -352,6 +352,8 @@ function renderHunts(
     const openButton = document.createElement("button");
     openButton.type = "button";
     openButton.className = "player-hunt-open";
+    if (hunt.organizationId)
+      openButton.dataset.theme = hunt.cardTheme ?? "ember";
     openButton.textContent = hunt.name;
     openButton.setAttribute("aria-label", `Open ${hunt.name}`);
     heading.append(openButton);
