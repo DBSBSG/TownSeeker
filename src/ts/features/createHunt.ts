@@ -2,7 +2,10 @@ import type { HuntRepository } from "../foundation/contracts.js";
 import type { HuntCardTheme, HuntRole } from "../foundation/types.js";
 import { getCreatorSession, request } from "./huntRepository.js";
 import { openHuntDetails } from "./huntDetails.js";
-import { populateOrganizationSelect } from "./organizationManager.js";
+import {
+  populateOrganizationSelect,
+  storedPlayerIdentity,
+} from "./organizationManager.js";
 interface HuntSummary {
   id: string;
   name: string;
@@ -223,6 +226,9 @@ export function mountCreateHunt(
   let selected: HuntSummary | undefined;
   let pendingDelete: HuntSummary | undefined;
   let availableHunts: HuntSummary[] = [];
+  let organizationOptionsLoaded = false;
+  let organizationOptionsInFlight: Promise<void> | undefined;
+  let organizationOptionsAccountId: string | undefined;
   const huntRowHeight = 76;
   const huntWindowOverscan = 5;
   let renderedHuntWindow = "";
@@ -235,9 +241,29 @@ export function mountCreateHunt(
     "huntId",
   );
 
-  async function loadOrganizationOptions(): Promise<void> {
+  async function loadOrganizationOptions(force = false): Promise<void> {
     if (!organizationSelect) return;
-    await populateOrganizationSelect(organizationSelect);
+    const identity = storedPlayerIdentity();
+    if (!identity) return;
+    if (organizationOptionsAccountId !== identity.accountId) {
+      organizationOptionsAccountId = identity.accountId;
+      organizationOptionsLoaded = false;
+      force = true;
+    }
+    while (organizationOptionsInFlight) {
+      await organizationOptionsInFlight;
+      if (!force) return;
+    }
+    if (organizationOptionsLoaded && !force) return;
+    const request = populateOrganizationSelect(organizationSelect);
+    organizationOptionsInFlight = request;
+    try {
+      await request;
+      organizationOptionsLoaded = true;
+    } finally {
+      if (organizationOptionsInFlight === request)
+        organizationOptionsInFlight = undefined;
+    }
   }
 
   function populateHuntSelector(): void {
@@ -640,7 +666,7 @@ export function mountCreateHunt(
       workspaceStatus.textContent = session.message;
       return;
     }
-    if (organizationSelect) void populateOrganizationSelect(organizationSelect);
+    void loadOrganizationOptions();
     const result = await request<HuntSummary[]>("/api/admin/hunts");
     if (!result.ok) {
       workspaceStatus.textContent = result.message;
@@ -702,7 +728,7 @@ export function mountCreateHunt(
     .querySelector('[data-testid="back-to-manage-hunts"]')
     ?.addEventListener("click", showManagerView);
   document.addEventListener("townseeker:organizations-changed", () => {
-    if (organizationSelect) void populateOrganizationSelect(organizationSelect);
+    void loadOrganizationOptions(true);
   });
   document.addEventListener("townseeker:hunt-settings-saved", () => {
     void refresh();

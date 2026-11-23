@@ -3590,6 +3590,39 @@ body[data-page="admin"] .manage-hunts-launcher {
 body[data-page="admin"] .create-hunt-dialog {
   width: min(42rem, calc(100vw - 2rem));
 }
+body[data-page="admin"] .create-hunt-dialog select {
+  width: 100%;
+  min-height: 2.9rem;
+  margin-top: 0.3rem;
+  padding: 0.7rem 2.6rem 0.7rem 0.85rem;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 0.75rem;
+  appearance: none;
+  background-color: var(--ts-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m3 6 5 5 5-5' fill='none' stroke='%23f2c66d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8'/%3E%3C/svg%3E");
+  background-position: right 0.9rem center;
+  background-repeat: no-repeat;
+  background-size: 0.9rem;
+  color: var(--ts-text);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+body[data-page="admin"] .create-hunt-dialog select:hover {
+  border-color: rgb(255 174 36 / 48%);
+}
+body[data-page="admin"] .create-hunt-dialog select:focus-visible {
+  border-color: var(--ts-gold);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(255 174 36 / 18%);
+}
+body[data-page="admin"] .create-hunt-dialog select option {
+  background: var(--ts-surface);
+  color: var(--ts-text);
+}
+body[data-page="admin"] .create-hunt-dialog::backdrop {
+  backdrop-filter: none;
+}
 body[data-page="admin"] .hunt-template-picker {
   margin: 0 0 1rem;
 }
