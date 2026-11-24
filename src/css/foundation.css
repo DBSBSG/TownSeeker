@@ -2892,6 +2892,30 @@ body[data-page="player"] .past-hunt-filter select:focus-visible {
   text-align: left;
   cursor: pointer;
 }
+.player-hunt .player-hunt-open[data-theme="ember"] {
+  border: 1px solid rgb(255 174 36 / 18%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(232 76 24 / 32%), transparent 88%);
+}
+.player-hunt .player-hunt-open[data-theme="forest"] {
+  border: 1px solid rgb(111 176 112 / 20%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(66 120 75 / 34%), transparent 88%);
+}
+.player-hunt .player-hunt-open[data-theme="coastal"] {
+  border: 1px solid rgb(105 177 204 / 20%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(53 123 158 / 34%), transparent 88%);
+}
+.player-hunt .player-hunt-open[data-theme="sunset"] {
+  border: 1px solid rgb(244 148 119 / 20%);
+  border-radius: 0.55rem;
+  padding: 0.15rem 0.55rem;
+  background: linear-gradient(105deg, rgb(181 75 91 / 34%), transparent 88%);
+}
 .player-hunt .player-hunt-open:focus-visible {
   outline: 2px solid var(--ts-gold);
   outline-offset: 3px;
@@ -3565,6 +3589,169 @@ body[data-page="admin"] .manage-hunts-launcher {
 }
 body[data-page="admin"] .create-hunt-dialog {
   width: min(42rem, calc(100vw - 2rem));
+}
+body[data-page="admin"] .create-hunt-dialog select {
+  width: 100%;
+  min-height: 2.9rem;
+  margin-top: 0.3rem;
+  padding: 0.7rem 2.6rem 0.7rem 0.85rem;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 0.75rem;
+  appearance: none;
+  background-color: var(--ts-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m3 6 5 5 5-5' fill='none' stroke='%23f2c66d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8'/%3E%3C/svg%3E");
+  background-position: right 0.9rem center;
+  background-repeat: no-repeat;
+  background-size: 0.9rem;
+  color: var(--ts-text);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+body[data-page="admin"] .create-hunt-dialog select:hover {
+  border-color: rgb(255 174 36 / 48%);
+}
+body[data-page="admin"] .create-hunt-dialog select:focus-visible {
+  border-color: var(--ts-gold);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(255 174 36 / 18%);
+}
+body[data-page="admin"] .create-hunt-dialog select option {
+  background: var(--ts-surface);
+  color: var(--ts-text);
+}
+body[data-page="admin"] .create-hunt-dialog::backdrop {
+  backdrop-filter: none;
+}
+body[data-page="admin"] .hunt-template-picker {
+  margin: 0 0 1rem;
+}
+body[data-page="admin"] .hunt-template-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.15rem;
+  color: #f4e9d7;
+  font-weight: 750;
+}
+body[data-page="admin"] .hunt-template-label span {
+  padding: 0.12rem 0.45rem;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+  color: #cfbea2;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+body[data-page="admin"] .hunt-template-picker > .field-help {
+  margin: 0 0 0.65rem;
+}
+body[data-page="admin"] .hunt-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+body[data-page="admin"] button.hunt-template-card {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 4%);
+  color: var(--ts-text);
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+body[data-page="admin"] button.hunt-template-card:hover,
+body[data-page="admin"] button.hunt-template-card:focus-visible {
+  border-color: rgb(255 174 36 / 55%);
+  background-color: rgb(255 255 255 / 7%);
+}
+body[data-page="admin"] button.hunt-template-card:focus-visible {
+  outline: 2px solid var(--ts-gold);
+  outline-offset: 2px;
+}
+body[data-page="admin"] button.hunt-template-card[aria-pressed="true"] {
+  border-color: var(--ts-gold);
+  box-shadow: 0 0 0 2px rgb(255 174 36 / 18%);
+}
+body[data-page="admin"] button.hunt-template-card[aria-pressed="true"]::after {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  padding: 0.22rem 0.5rem;
+  border: 1px solid rgb(255 208 120 / 42%);
+  border-radius: 999px;
+  background: rgb(36 26 18 / 86%);
+  color: #ffe5a0;
+  content: "✓ Selected";
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+body[data-page="admin"] .hunt-template-preview {
+  display: block;
+  overflow: hidden;
+}
+body[data-page="admin"] .hunt-template-preview svg {
+  display: block;
+  width: 100%;
+  height: 5.6rem;
+  color: #ffe5a0;
+}
+body[data-page="admin"] .hunt-template-preview--community {
+  background: linear-gradient(125deg, #593a23, #a8551e 58%, #d28c37);
+}
+body[data-page="admin"] .hunt-template-preview--campus {
+  background: linear-gradient(125deg, #21382f, #426449 58%, #82945b);
+}
+body[data-page="admin"] .hunt-template-preview--downtown {
+  background: linear-gradient(125deg, #243747, #466579 58%, #879a9a);
+}
+body[data-page="admin"] .hunt-template-preview--trivia {
+  background: linear-gradient(125deg, #493044, #8f4b58 58%, #d18454);
+}
+body[data-page="admin"] .hunt-template-copy {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+body[data-page="admin"] .hunt-template-copy strong {
+  color: #fcf9f5;
+  font-size: 0.94rem;
+}
+body[data-page="admin"] .hunt-template-copy > span {
+  color: #cfbea2;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+body[data-page="admin"] .hunt-template-clear {
+  min-height: 2rem;
+  margin: 1rem 0 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #e1d7c6;
+  font-size: 0.8rem;
+}
+body[data-page="admin"] .hunt-template-clear[hidden] {
+  display: none;
+}
+body[data-page="admin"] .create-hunt-dialog button[type="submit"] {
+  margin-top: 1rem;
+}
+@media (max-width: 520px) {
+  body[data-page="admin"] .hunt-template-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 body[data-page="admin"] .hunt-details-dialog-heading > div {
   min-width: 0;

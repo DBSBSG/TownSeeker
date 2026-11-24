@@ -713,7 +713,7 @@ function renderHunt(hunt: HuntDefinition, role: HuntRole): void {
   addFact(
     facts,
     "Hunt type",
-    hunt.huntType === "kahoot" ? "Kahoot Hunt" : "Traditional Hunt",
+    hunt.huntType === "kahoot" ? "Live Trivia Hunt" : "Traditional Hunt",
   );
   addFact(facts, "Status", hunt.status);
   addFact(

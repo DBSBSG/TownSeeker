@@ -65,7 +65,7 @@ export function mountKahootHost(
   let disposed = false;
   let acting = false;
   const heading = document.createElement("h3");
-  heading.textContent = "Kahoot host dashboard";
+  heading.textContent = "Live trivia host dashboard";
   const status = paragraph("Loading lobby…");
   status.setAttribute("role", "status");
   const error = paragraph("");
@@ -229,7 +229,7 @@ export function mountKahootPlayer(
       sending = false;
       if (disposed) return;
       error.textContent = result.ok ? "" : result.message;
-      // Wrong answers are also final submissions in Kahoot Hunts.
+      // Wrong answers are also final submissions in live trivia hunts.
       if (result.ok && state?.question?.id === question.id)
         render({ ...state, submitted: true });
       await refresh();
