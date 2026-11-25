@@ -41,24 +41,22 @@ See [Hunt configuration](Documentation/hunt_configuration.md) for the JSON forma
 ## Hostinger deployment environments
 
 GitHub Actions uploads source archives through the Hostinger API; Hostinger Git
-import is not required. Five distinct managed Node.js websites provide stable URLs:
+import is not required. Three distinct managed Node.js websites provide stable URLs:
 
 | Environment | Source                                | GitHub Actions variable      |
 | ----------- | ------------------------------------- | ---------------------------- |
 | Production  | `main`                                | `HOSTINGER_DOMAIN`           |
 | Stage       | `stage`, including its PR into `main` | `HOSTINGER_STAGE_DOMAIN`     |
 | Preview 1   | Assigned PR                           | `HOSTINGER_PREVIEW_1_DOMAIN` |
-| Preview 2   | Assigned PR                           | `HOSTINGER_PREVIEW_2_DOMAIN` |
-| Preview 3   | Assigned PR                           | `HOSTINGER_PREVIEW_3_DOMAIN` |
 
-Create five websites on the Business plan and set those repository variables to
+Create three websites on the Business plan and set those repository variables to
 their hostnames, without `https://` or paths. Set `HOSTINGER_USERNAME` to the
 hosting account username, and store `HOSTINGER_API_TOKEN` as a repository secret.
 Missing or duplicate hostnames stop reconciliation before hosting changes.
 Existing automatic Hostinger Git deployments must be disabled.
 
 `.github/workflows/deploy.yml` runs checks without deployment credentials.
-After successful checks, `.github/workflows/destroy-pr.yml` reconciles all five
+After successful checks, `.github/workflows/destroy-pr.yml` reconciles all three
 environments using trusted scripts from `main`. It also runs on same-repository
 PR closure or manual dispatch. Updates are serialized. Only current successful
 checks with verification, lint and E2E jobs can release an application. Fork PRs

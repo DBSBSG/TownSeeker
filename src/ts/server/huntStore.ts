@@ -214,6 +214,7 @@ export class HuntStore {
     const fields = object(input);
     inputFields(fields, [
       "name",
+      "cardTheme",
       "organizationName",
       "organizationId",
       "huntType",
@@ -225,6 +226,11 @@ export class HuntStore {
       "endsAt",
       "taskOrderMode",
     ]);
+    if (fields.cardTheme !== undefined && !fields.organizationId)
+      throw new StoreError(
+        "validation",
+        "Choose an organization before selecting a hunt card theme.",
+      );
     const now = new Date().toISOString();
     fields.maxParticipants ??= 200;
     const hunt = accepted(

@@ -6,11 +6,16 @@ These instructions apply to the entire repository.
 
 The purpose of this policy is to prevent Codex from making broad or incidental changes outside the files that the developer explicitly wants changed.
 
+## Codex Model Preference
+
+When Codex exposes a model selector, use GPT-6 Luna for work in this repository, including delegated work. Do not switch to another model unless the developer explicitly requests it. Repository instructions cannot override a model fixed by the Codex app or session; if GPT-6 Luna is unavailable, tell the developer that the model must be selected in the app or session settings rather than claiming this file enforced it.
+
 ## Core Rule: Repository Is Read-Only by Default
 
 Treat the entire repository as READ-ONLY unless the developer explicitly authorizes a file path for modification in the current request.
 
 You MAY:
+
 - Read files.
 - Search the repository.
 - Inspect code, configuration, documentation, tests, and Git history.
@@ -18,6 +23,7 @@ You MAY:
 - Explain which files would need changes.
 
 You MUST NOT:
+
 - Modify a file unless its exact path was explicitly authorized.
 - Create a file unless its exact path was explicitly authorized.
 - Delete a file unless its exact path was explicitly authorized.
@@ -55,6 +61,10 @@ The following DO NOT authorize repository-wide editing:
 - Mentioning files only as context rather than explicitly granting permission to edit them.
 
 If exact editable file paths are not provided, remain read-only.
+
+### Standing Prettier Authorization
+
+Formatting-only changes made with Prettier 3.9.10 are pre-authorized for every file named in the repository's `format:check` script. This is a narrow exception to the exact-path authorization rule above. When a repository-wide format check reports files that need formatting, format those files and rerun the check until it passes. Do not ask the developer to approve formatting-only changes to those files, and do not leave fixable Prettier warnings for later. This authorization does not cover content edits, other tools, or files outside the `format:check` inputs.
 
 ## No Implied Permission
 
@@ -117,7 +127,7 @@ Before creating a commit, format every explicitly authorized changed file that P
 1. Confirm `pnpm exec prettier --version` reports `3.9.10`.
 2. Run `pnpm exec prettier --write <authorized changed paths>`, listing only files authorized for the current task. Do not use `pnpm format` unless every path it rewrites is authorized.
 3. Run `pnpm exec prettier --check <the same authorized paths>`.
-4. Run `pnpm format:check` as a read-only, repository-wide check. If it reports unrelated failures, do not modify unauthorized files; report those failures separately.
+4. Run `pnpm format:check` and require it to pass before committing. The files in its script inputs are covered by the standing Prettier authorization above; format any failures and rerun the check. Do not change files outside those inputs to resolve formatting failures.
 5. Do not commit if the formatter is unavailable or the version differs. Use Prettier 3.9.10 in an isolated scratch environment, or report the blocker before committing.
 
 For Markdown or other files not listed in `format:check`, run Prettier 3.9.10 directly on the authorized path.

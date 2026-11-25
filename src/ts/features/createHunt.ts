@@ -1,8 +1,11 @@
 import type { HuntRepository } from "../foundation/contracts.js";
-import type { HuntRole } from "../foundation/types.js";
+import type { HuntCardTheme, HuntRole } from "../foundation/types.js";
 import { getCreatorSession, request } from "./huntRepository.js";
 import { openHuntDetails } from "./huntDetails.js";
-import { populateOrganizationSelect } from "./organizationManager.js";
+import {
+  populateOrganizationSelect,
+  storedPlayerIdentity,
+} from "./organizationManager.js";
 interface HuntSummary {
   id: string;
   name: string;
@@ -42,6 +45,40 @@ const huntFilterNotes: Record<HuntListFilter, string> = {
   shared: "Showing hunts shared with you, most recently edited first.",
 };
 
+const huntTemplates = {
+  community: {
+    name: "Community Explorer",
+    description:
+      "Explore local places, meet the people behind them, and discover something new along the way.",
+    huntType: "traditional",
+    maxParticipants: "200",
+    taskOrderMode: "sequential",
+  },
+  campus: {
+    name: "Campus Welcome",
+    description:
+      "Help new arrivals find useful campus locations, familiar landmarks, and places to connect.",
+    huntType: "traditional",
+    maxParticipants: "200",
+    taskOrderMode: "sequential",
+  },
+  downtown: {
+    name: "Downtown Discovery",
+    description:
+      "Explore downtown businesses and public spaces while learning what makes the area special.",
+    huntType: "traditional",
+    maxParticipants: "200",
+    taskOrderMode: "any",
+  },
+  trivia: {
+    name: "Team Trivia",
+    description: "A LIVE host-led round of quick questions.",
+    huntType: "kahoot",
+    maxParticipants: "200",
+    taskOrderMode: "sequential",
+  },
+} as const;
+
 export function mountCreateHunt(
   root: HTMLElement,
   repository: HuntRepository,
@@ -49,6 +86,15 @@ export function mountCreateHunt(
   const form = root.querySelector<HTMLFormElement>('[data-testid="hunt-form"]');
   const organizationSelect = form?.querySelector<HTMLSelectElement>(
     '[name="organizationId"]',
+  );
+  const templateCards = form?.querySelectorAll<HTMLButtonElement>(
+    "[data-hunt-template]",
+  );
+  const clearTemplateButton = form?.querySelector<HTMLButtonElement>(
+    '[data-testid="clear-hunt-template"]',
+  );
+  const organizationThemeField = form?.querySelector<HTMLElement>(
+    '[data-testid="organization-hunt-theme-field"]',
   );
   const status = root.querySelector<HTMLElement>('[data-testid="hunt-status"]');
   const createDialog = document.querySelector<HTMLDialogElement>(
@@ -71,6 +117,53 @@ export function mountCreateHunt(
   );
   if (!form || !status || !createDialog || !manageDialog || !managerView)
     return;
+  const updateOrganizationThemeField = (): void => {
+    if (organizationThemeField)
+      organizationThemeField.hidden = !organizationSelect?.value;
+  };
+  organizationSelect?.addEventListener("change", updateOrganizationThemeField);
+  updateOrganizationThemeField();
+  const resetTemplateFields = (): void => {
+    (form.elements.namedItem("name") as HTMLInputElement).value = "";
+    (form.elements.namedItem("description") as HTMLTextAreaElement).value = "";
+    (form.elements.namedItem("huntType") as HTMLSelectElement).value =
+      "traditional";
+    (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
+      "200";
+    (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
+      "sequential";
+  };
+  const clearTemplateChoice = (): void => {
+    templateCards?.forEach((card) =>
+      card.setAttribute("aria-pressed", "false"),
+    );
+    if (clearTemplateButton) clearTemplateButton.hidden = true;
+  };
+  templateCards?.forEach((card) => {
+    card.addEventListener("click", () => {
+      const template =
+        huntTemplates[card.dataset.huntTemplate as keyof typeof huntTemplates];
+      if (!template) return;
+      templateCards.forEach((item) =>
+        item.setAttribute("aria-pressed", String(item === card)),
+      );
+      if (clearTemplateButton) clearTemplateButton.hidden = false;
+      (form.elements.namedItem("name") as HTMLInputElement).value =
+        template.name;
+      (form.elements.namedItem("description") as HTMLTextAreaElement).value =
+        template.description;
+      (form.elements.namedItem("huntType") as HTMLSelectElement).value =
+        template.huntType;
+      (form.elements.namedItem("maxParticipants") as HTMLInputElement).value =
+        template.maxParticipants;
+      (form.elements.namedItem("taskOrderMode") as HTMLSelectElement).value =
+        template.taskOrderMode;
+    });
+  });
+  clearTemplateButton?.addEventListener("click", () => {
+    resetTemplateFields();
+    clearTemplateChoice();
+  });
   const workspaceStatus = document.querySelector<HTMLElement>(
     '[data-testid="creator-status"]',
   )!;
@@ -132,6 +225,9 @@ export function mountCreateHunt(
   let selected: HuntSummary | undefined;
   let pendingDelete: HuntSummary | undefined;
   let availableHunts: HuntSummary[] = [];
+  let organizationOptionsLoaded = false;
+  let organizationOptionsInFlight: Promise<void> | undefined;
+  let organizationOptionsAccountId: string | undefined;
   const huntRowHeight = 76;
   const huntWindowOverscan = 5;
   let renderedHuntWindow = "";
@@ -144,9 +240,29 @@ export function mountCreateHunt(
     "huntId",
   );
 
-  async function loadOrganizationOptions(): Promise<void> {
+  async function loadOrganizationOptions(force = false): Promise<void> {
     if (!organizationSelect) return;
-    await populateOrganizationSelect(organizationSelect);
+    const identity = storedPlayerIdentity();
+    if (!identity) return;
+    if (organizationOptionsAccountId !== identity.accountId) {
+      organizationOptionsAccountId = identity.accountId;
+      organizationOptionsLoaded = false;
+      force = true;
+    }
+    while (organizationOptionsInFlight) {
+      await organizationOptionsInFlight;
+      if (!force) return;
+    }
+    if (organizationOptionsLoaded && !force) return;
+    const request = populateOrganizationSelect(organizationSelect);
+    organizationOptionsInFlight = request;
+    try {
+      await request;
+      organizationOptionsLoaded = true;
+    } finally {
+      if (organizationOptionsInFlight === request)
+        organizationOptionsInFlight = undefined;
+    }
   }
 
   function populateHuntSelector(): void {
@@ -549,7 +665,7 @@ export function mountCreateHunt(
       workspaceStatus.textContent = session.message;
       return;
     }
-    if (organizationSelect) void populateOrganizationSelect(organizationSelect);
+    void loadOrganizationOptions();
     const result = await request<HuntSummary[]>("/api/admin/hunts");
     if (!result.ok) {
       workspaceStatus.textContent = result.message;
@@ -611,7 +727,7 @@ export function mountCreateHunt(
     .querySelector('[data-testid="back-to-manage-hunts"]')
     ?.addEventListener("click", showManagerView);
   document.addEventListener("townseeker:organizations-changed", () => {
-    if (organizationSelect) void populateOrganizationSelect(organizationSelect);
+    void loadOrganizationOptions(true);
   });
   document.addEventListener("townseeker:hunt-settings-saved", () => {
     void refresh();
@@ -661,6 +777,7 @@ export function mountCreateHunt(
     const text = (key: string) => String(fields.get(key) ?? "").trim();
     const date = (key: string) =>
       text(key) ? new Date(text(key)).toISOString() : null;
+    const organizationId = text("organizationId");
     const button = form.querySelector<HTMLButtonElement>(
       'button[type="submit"]',
     );
@@ -669,7 +786,10 @@ export function mountCreateHunt(
     try {
       const result = await repository.createHunt({
         name: text("name"),
-        organizationId: text("organizationId") || null,
+        organizationId: organizationId || null,
+        ...(organizationId
+          ? { cardTheme: text("cardTheme") as HuntCardTheme }
+          : {}),
         huntType: text("huntType") === "kahoot" ? "kahoot" : "traditional",
         maxParticipants: text("maxParticipants")
           ? Number(text("maxParticipants"))
@@ -694,6 +814,8 @@ export function mountCreateHunt(
       select({ id: result.value.id, name: result.value.name, role: "owner" });
       huntsLoaded = false;
       form.reset();
+      clearTemplateChoice();
+      updateOrganizationThemeField();
       createDialog.close();
       showManagerView();
     } catch {

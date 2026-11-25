@@ -334,19 +334,262 @@
                 <h2>Create a hunt</h2>
               </div>
             </div>
-            <p class="section-copy">
-              Set up a new adventure with a name, a time window, and a way for
-              players to explore.
-            </p>
             <form data-testid="hunt-form">
               <fieldset>
-                <legend>Hunt details</legend>
+                <div
+                  class="hunt-template-picker"
+                  role="group"
+                  aria-labelledby="hunt-template-label"
+                  aria-describedby="hunt-template-help"
+                >
+                  <p class="hunt-template-label" id="hunt-template-label">
+                    Start from a template <span>Optional</span>
+                  </p>
+                  <p class="field-help" id="hunt-template-help">
+                    Choose a starter to prefill the form, then adjust it to fit
+                    your hunt. You can also continue with the blank form.
+                  </p>
+                  <div class="hunt-template-grid">
+                    <button
+                      class="hunt-template-card"
+                      type="button"
+                      data-hunt-template="community"
+                      aria-pressed="false"
+                    >
+                      <span
+                        class="hunt-template-preview hunt-template-preview--community"
+                        aria-hidden="true"
+                      >
+                        <svg viewBox="0 0 320 120" focusable="false">
+                          <path
+                            d="M0 98h320v22H0z"
+                            fill="currentColor"
+                            opacity=".22"
+                          />
+                          <path
+                            d="M38 94V57l41-25 41 25v37H38Z"
+                            fill="currentColor"
+                            opacity=".72"
+                          />
+                          <path
+                            d="M31 59 79 29l48 30"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="7"
+                          />
+                          <path
+                            d="M54 68h16v16H54zm34 0h16v16H88zM73 83h14v11H73z"
+                            fill="#392819"
+                            opacity=".8"
+                          />
+                          <path
+                            d="M147 98c23-29 31-37 54-37 18 0 21 16 39 16 15 0 24-13 43-29"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-dasharray="8 9"
+                            stroke-linecap="round"
+                            stroke-width="5"
+                            opacity=".8"
+                          />
+                          <path
+                            d="M273 37c0-10 8-18 18-18s18 8 18 18c0 13-18 32-18 32s-18-19-18-32Z"
+                            fill="currentColor"
+                          />
+                          <circle cx="291" cy="37" r="6" fill="#392819" />
+                        </svg>
+                      </span>
+                      <span class="hunt-template-copy">
+                        <strong>Community Explorer</strong>
+                        <span>Discover local places and people.</span>
+                      </span>
+                    </button>
+                    <button
+                      class="hunt-template-card"
+                      type="button"
+                      data-hunt-template="campus"
+                      aria-pressed="false"
+                    >
+                      <span
+                        class="hunt-template-preview hunt-template-preview--campus"
+                        aria-hidden="true"
+                      >
+                        <svg viewBox="0 0 320 120" focusable="false">
+                          <path
+                            d="M0 98h320v22H0z"
+                            fill="currentColor"
+                            opacity=".2"
+                          />
+                          <path
+                            d="m48 51 67-29 67 29v8H48v-8Z"
+                            fill="currentColor"
+                            opacity=".78"
+                          />
+                          <path
+                            d="M57 62h116v35H57z"
+                            fill="currentColor"
+                            opacity=".68"
+                          />
+                          <path
+                            d="M76 64h11v30H76zm30 0h11v30h-11zm30 0h11v30h-11z"
+                            fill="#20392f"
+                            opacity=".8"
+                          />
+                          <path
+                            d="M97 82h36v15H97z"
+                            fill="#20392f"
+                            opacity=".8"
+                          />
+                          <path
+                            d="M199 94c25-28 42-34 65-31 17 2 25 11 41-1"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-dasharray="7 8"
+                            stroke-linecap="round"
+                            stroke-width="5"
+                            opacity=".85"
+                          />
+                          <circle
+                            cx="228"
+                            cy="39"
+                            r="14"
+                            fill="currentColor"
+                            opacity=".72"
+                          />
+                          <path
+                            d="M251 34c0-9 7-16 16-16s16 7 16 16c0 11-16 29-16 29s-16-18-16-29Z"
+                            fill="currentColor"
+                          />
+                          <circle cx="267" cy="34" r="5" fill="#20392f" />
+                        </svg>
+                      </span>
+                      <span class="hunt-template-copy">
+                        <strong>Campus Welcome</strong>
+                        <span
+                          >Find landmarks, services, and gathering spots.</span
+                        >
+                      </span>
+                    </button>
+                    <button
+                      class="hunt-template-card"
+                      type="button"
+                      data-hunt-template="downtown"
+                      aria-pressed="false"
+                    >
+                      <span
+                        class="hunt-template-preview hunt-template-preview--downtown"
+                        aria-hidden="true"
+                      >
+                        <svg viewBox="0 0 320 120" focusable="false">
+                          <path
+                            d="M0 98h320v22H0z"
+                            fill="currentColor"
+                            opacity=".2"
+                          />
+                          <path
+                            d="M37 97V45h52v52H37zm63 0V27h61v70h-61zm72 0V49h46v48h-46zm58 0V36h53v61h-53z"
+                            fill="currentColor"
+                            opacity=".66"
+                          />
+                          <path
+                            d="M110 42h13v13h-13zm24 0h13v13h-13zm-24 22h13v13h-13zm24 0h13v13h-13zM49 57h12v12H49zm20 0h12v12H69zm112 8h11v12h-11zm67-15h13v13h-13zm22 0h13v13h-13z"
+                            fill="#263746"
+                            opacity=".85"
+                          />
+                          <path
+                            d="M0 100h320"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            opacity=".72"
+                          />
+                          <path
+                            d="M15 91h25m244 0h22"
+                            stroke="currentColor"
+                            stroke-dasharray="5 6"
+                            stroke-width="3"
+                            opacity=".8"
+                          />
+                        </svg>
+                      </span>
+                      <span class="hunt-template-copy">
+                        <strong>Downtown Discovery</strong>
+                        <span
+                          >Explore neighborhood businesses and public
+                          spaces.</span
+                        >
+                      </span>
+                    </button>
+                    <button
+                      class="hunt-template-card"
+                      type="button"
+                      data-hunt-template="trivia"
+                      aria-pressed="false"
+                    >
+                      <span
+                        class="hunt-template-preview hunt-template-preview--trivia"
+                        aria-hidden="true"
+                      >
+                        <svg viewBox="0 0 320 120" focusable="false">
+                          <path
+                            d="M0 98h320v22H0z"
+                            fill="currentColor"
+                            opacity=".2"
+                          />
+                          <rect
+                            x="58"
+                            y="29"
+                            width="82"
+                            height="57"
+                            rx="8"
+                            fill="currentColor"
+                            opacity=".72"
+                            transform="rotate(-8 58 29)"
+                          />
+                          <rect
+                            x="126"
+                            y="38"
+                            width="89"
+                            height="60"
+                            rx="8"
+                            fill="currentColor"
+                            opacity=".9"
+                            transform="rotate(5 126 38)"
+                          />
+                          <path
+                            d="M159 54c0-7 5-12 13-12 7 0 12 4 12 11 0 6-4 9-8 12-4 2-5 4-5 8m0 8v2"
+                            fill="none"
+                            stroke="#633047"
+                            stroke-linecap="round"
+                            stroke-width="5"
+                          />
+                          <path
+                            d="m239 31 5 12 12 5-12 5-5 12-5-12-12-5 12-5 5-12ZM88 87l4 9 9 4-9 4-4 9-4-9-9-4 9-4 4-9Z"
+                            fill="currentColor"
+                          />
+                          <circle cx="259" cy="84" r="5" fill="currentColor" />
+                          <circle cx="70" cy="31" r="4" fill="currentColor" />
+                        </svg>
+                      </span>
+                      <span class="hunt-template-copy">
+                        <strong>Team Trivia</strong>
+                        <span>A LIVE host-led round of quick questions.</span>
+                      </span>
+                    </button>
+                  </div>
+                  <button
+                    class="hunt-template-clear"
+                    type="button"
+                    data-testid="clear-hunt-template"
+                    hidden
+                  >
+                    Clear template choice
+                  </button>
+                </div>
                 <label for="hunt-name">Hunt name</label
                 ><input id="hunt-name" name="name" required />
                 <label for="hunt-type">Hunt type</label
                 ><select id="hunt-type" name="huntType">
                   <option value="traditional">Traditional Hunt</option>
-                  <option value="kahoot">Kahoot Hunt</option>
+                  <option value="kahoot">Live Trivia Hunt</option>
                 </select>
                 <label for="hunt-capacity"
                   >Maximum participants (default 200; up to 200)</label
@@ -367,7 +610,23 @@
                 >
                   <option value="">No organization</option>
                 </select>
-                <p class="field-help">Choose an organization you belong to.</p>
+                <div
+                  class="organization-hunt-theme-field"
+                  data-testid="organization-hunt-theme-field"
+                  hidden
+                >
+                  <label for="hunt-card-theme">Hunt info background</label>
+                  <select id="hunt-card-theme" name="cardTheme">
+                    <option value="ember">Ember trail</option>
+                    <option value="forest">Forest path</option>
+                    <option value="coastal">Coastal route</option>
+                    <option value="sunset">Sunset trail</option>
+                  </select>
+                  <p class="field-help">
+                    Choose a faded gradient for this hunt’s name on player
+                    dashboards.
+                  </p>
+                </div>
                 <label for="hunt-description">Description</label
                 ><textarea
                   id="hunt-description"
@@ -391,9 +650,7 @@
                 <button type="submit">Create hunt</button>
               </fieldset>
             </form>
-            <p role="status" data-testid="hunt-status">
-              Enter hunt details to begin.
-            </p>
+            <p role="status" data-testid="hunt-status"></p>
           </section>
         </dialog>
         <dialog
@@ -524,7 +781,7 @@
               data-testid="kahoot-host"
               class="kahoot-panel"
               hidden
-              aria-label="Kahoot host controls"
+              aria-label="Live trivia host controls"
             ></section>
             <form
               data-testid="hunt-settings-form"
@@ -1026,7 +1283,7 @@
                     <div class="field-grid">
                       <div>
                         <label for="task-timer"
-                          >Kahoot question timer in seconds (optional)</label
+                          >Trivia question timer in seconds (optional)</label
                         ><input
                           id="task-timer"
                           name="timeLimitSeconds"

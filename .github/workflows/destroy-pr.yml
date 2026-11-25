@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Reconcile production, stage, and three PR slots
+      - name: Reconcile production, stage, and one PR slot
         env:
           GH_TOKEN: ${{ github.token }}
           HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
@@ -49,8 +49,6 @@ jobs:
           HOSTINGER_DOMAIN: ${{ vars.HOSTINGER_DOMAIN }}
           HOSTINGER_STAGE_DOMAIN: ${{ vars.HOSTINGER_STAGE_DOMAIN }}
           HOSTINGER_PREVIEW_1_DOMAIN: ${{ vars.HOSTINGER_PREVIEW_1_DOMAIN }}
-          HOSTINGER_PREVIEW_2_DOMAIN: ${{ vars.HOSTINGER_PREVIEW_2_DOMAIN }}
-          HOSTINGER_PREVIEW_3_DOMAIN: ${{ vars.HOSTINGER_PREVIEW_3_DOMAIN }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
         run: node deploy/preview-slots.mjs

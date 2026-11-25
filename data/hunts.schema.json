@@ -158,6 +158,10 @@
         "tasks"
       ],
       "properties": {
+        "cardTheme": {
+          "type": "string",
+          "enum": ["ember", "forest", "coastal", "sunset"]
+        },
         "id": {
           "type": "string",
           "minLength": 1,

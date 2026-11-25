@@ -44,7 +44,10 @@ export interface OrganizationHuntSummary {
   status: HuntStatus;
 }
 
+export type HuntCardTheme = "ember" | "forest" | "coastal" | "sunset";
+
 export interface HuntInput {
+  cardTheme?: HuntCardTheme;
   huntType?: "traditional" | "kahoot";
   organizationName?: string;
   organizationId?: string | null;
@@ -127,6 +130,7 @@ export interface PlayerTask {
   location?: TaskLocation;
 }
 export interface PlayerHunt {
+  cardTheme?: HuntCardTheme;
   huntType?: "traditional" | "kahoot";
   kahoot?: KahootView;
   organizationName?: string;

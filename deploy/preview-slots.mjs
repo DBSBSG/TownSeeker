@@ -3,7 +3,7 @@ import { randomUUID, createHash } from "node:crypto";
 import { appendFile, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const slotNames = ["preview-1", "preview-2", "preview-3"];
+const slotNames = ["preview-1"];
 const managedKeys = [
   "HOST",
   "APP_ORIGIN",
@@ -28,9 +28,7 @@ export function allocateSlots(pulls, repository) {
   );
   const slots = new Map();
   for (const pull of eligible) {
-    const labels = labelNames(pull).filter((name) =>
-      /^preview-slot-[123]$/.test(name),
-    );
+    const labels = labelNames(pull).filter((name) => name === "preview-slot-1");
     if (labels.length > 1)
       throw new Error(`PR #${pull.number} has multiple preview slots.`);
     if (!labels.length) continue;
@@ -57,16 +55,14 @@ export function configuration(env) {
     "HOSTINGER_DOMAIN",
     "HOSTINGER_STAGE_DOMAIN",
     "HOSTINGER_PREVIEW_1_DOMAIN",
-    "HOSTINGER_PREVIEW_2_DOMAIN",
-    "HOSTINGER_PREVIEW_3_DOMAIN",
   ];
   const domains = variables.map((key) => {
     if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$/.test(env[key] || ""))
       throw new Error(`Set ${key} to its own website hostname.`);
     return env[key].toLowerCase();
   });
-  if (new Set(domains).size !== 5)
-    throw new Error("All five Hostinger websites must be different.");
+  if (new Set(domains).size !== 3)
+    throw new Error("All three Hostinger websites must be different.");
   return Object.fromEntries(
     ["production", "stage", ...slotNames].map((name, i) => [name, domains[i]]),
   );
@@ -477,13 +473,7 @@ export async function reconcile(env = process.env, dependencies = {}) {
       }
     });
   if (failures.length) throw new Error(failures.join("\n"));
-  for (const name of [
-    "Stage",
-    "Queued",
-    "preview-slot-1",
-    "preview-slot-2",
-    "preview-slot-3",
-  ]) {
+  for (const name of ["Stage", "Queued", "preview-slot-1"]) {
     const labels = await list("/labels");
     if (!labels.some((label) => label.name === name))
       await gh("/labels", "POST", {

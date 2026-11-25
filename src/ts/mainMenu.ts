@@ -1,4 +1,5 @@
 // mainMenu.ts
+import { confirmAction } from "./features/confirmationDialog.js";
 
 // --- Navigation helper ---
 function navigateToPage(path: string): void {
@@ -23,9 +24,9 @@ function initIndexMenu(): void {
 function initGameMenu(): void {
   const mainMenuBtn = document.getElementById("mainMenuBtn");
 
-  mainMenuBtn?.addEventListener("click", () => {
-    const confirmLeave = confirm(
-      "Are you sure you want to return to the main menu? Unsaved progress will be lost."
+  mainMenuBtn?.addEventListener("click", async () => {
+    const confirmLeave = await confirmAction(
+      "Are you sure you want to return to the main menu? Unsaved progress will be lost.",
     );
     if (confirmLeave) {
       navigateToPage("./index.html");

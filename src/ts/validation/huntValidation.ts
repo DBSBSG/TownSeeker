@@ -252,6 +252,7 @@ export function validateHunt(input: unknown): OperationResult<HuntDefinition> {
     [
       ...huntFields,
       ...[
+        "cardTheme",
         "organizationName",
         "organizationId",
         "maxParticipants",
@@ -262,6 +263,14 @@ export function validateHunt(input: unknown): OperationResult<HuntDefinition> {
     "",
     issues,
   );
+  if (
+    input.cardTheme !== undefined &&
+    !["ember", "forest", "coastal", "sunset"].includes(String(input.cardTheme))
+  )
+    issues.push({
+      field: "cardTheme",
+      message: "Choose a supported hunt card theme.",
+    });
   if (
     input.organizationId !== undefined &&
     input.organizationId !== null &&
@@ -288,7 +297,7 @@ export function validateHunt(input: unknown): OperationResult<HuntDefinition> {
   )
     issues.push({
       field: "huntType",
-      message: "Choose Traditional Hunt or Kahoot Hunt.",
+      message: "Choose Traditional Hunt or Live Trivia Hunt.",
     });
   if (
     input.maxParticipants !== undefined &&
