@@ -528,12 +528,7 @@ test("updates one bot comment without touching human comments or adding duplicat
 test("waiting and queued comments never claim the current revision is deployed", async () => {
   const f = fixture({
     missingJob: true,
-    pulls: [
-      pull(1, ["preview-slot-1"]),
-      pull(2, ["preview-slot-2"]),
-      pull(3, ["preview-slot-3"]),
-      pull(4),
-    ],
+    pulls: [pull(1), pull(2), pull(3), pull(4)],
   });
   await reconcile(env, f.dependencies);
   assert.match(
@@ -571,12 +566,12 @@ test("a queued PR's existing comment gains its website when a slot becomes avail
   const pulls = [pull(1), pull(2), pull(3), pull(4)];
   const f = fixture({ pulls });
   await reconcile(env, f.dependencies);
-  const queued = f.comments.find((item) => item.issue_number === 2);
+  const queued = f.comments.find((item) => item.issue_number === 4);
   assert.match(queued.body, /No website is assigned yet/);
   const id = queued.id;
-  pulls.shift();
+  pulls.splice(0, 3);
   await reconcile(env, f.dependencies);
-  const assigned = f.comments.filter((item) => item.issue_number === 2);
+  const assigned = f.comments.filter((item) => item.issue_number === 4);
   assert.equal(assigned.length, 1);
   assert.equal(assigned[0].id, id);
   assert.match(assigned[0].body, /https:\/\/pr1.example.com\//);
