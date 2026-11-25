@@ -26,8 +26,6 @@ const env = {
   HOSTINGER_DOMAIN: "main.example.com",
   HOSTINGER_STAGE_DOMAIN: "stage.example.com",
   HOSTINGER_PREVIEW_1_DOMAIN: "pr1.example.com",
-  HOSTINGER_PREVIEW_2_DOMAIN: "pr2.example.com",
-  HOSTINGER_PREVIEW_3_DOMAIN: "pr3.example.com",
   GH_TOKEN: "github-fixture",
   HOSTINGER_API_TOKEN: "host-fixture",
   GITHUB_REPOSITORY: repository,
@@ -45,31 +43,32 @@ test("stage PR has a dedicated site, never a preview slot", () => {
   assert(isStage(stage));
   assert.deepEqual(
     [...plan.slots.values()].map((p) => p.number),
-    [2, 3, 4],
+    [2],
   );
   assert.deepEqual(
     plan.queued.map((p) => p.number),
-    [5],
+    [3, 4, 5],
   );
 });
-test("preserves assigned slots, allocates oldest waiting PR first, and ignores forks/closed PRs", () => {
+test("preserves Preview 1 and queues other assigned PRs, ignoring forks and closed PRs", () => {
   const rows = [
     pull(7),
-    pull(5),
+    pull(5, ["preview-slot-1"]),
     pull(3, ["preview-slot-2"]),
     pull(1, [], { state: "closed" }),
     pull(2, [], {
       head: { ref: "fork", sha, repo: { full_name: "outsider/repo" } },
     }),
-    pull(6),
+    pull(6, ["preview-slot-3"]),
   ];
   const plan = allocateSlots(rows, repository);
-  assert.equal(plan.slots.get("preview-2").number, 3);
   assert.equal(plan.slots.get("preview-1").number, 5);
-  assert.equal(plan.slots.get("preview-3").number, 6);
-  assert.equal(plan.queued[0].number, 7);
+  assert.deepEqual(
+    plan.queued.map((item) => item.number),
+    [3, 6, 7],
+  );
 });
-test("fails closed on duplicate or multiple slot labels", () => {
+test("fails closed on duplicate Preview 1 owners and retires obsolete slot labels", () => {
   assert.throws(
     () =>
       allocateSlots(
@@ -78,16 +77,15 @@ test("fails closed on duplicate or multiple slot labels", () => {
       ),
     /Duplicate/,
   );
-  assert.throws(
-    () =>
-      allocateSlots(
-        [pull(1, ["preview-slot-1", "preview-slot-2"])],
-        repository,
-      ),
-    /multiple/,
+  assert.equal(
+    allocateSlots(
+      [pull(3, ["preview-slot-1", "preview-slot-2"])],
+      repository,
+    ).slots.get("preview-1").number,
+    3,
   );
 });
-test("requires all five distinct domains before any writes", async () => {
+test("requires all three distinct domains before any writes", async () => {
   assert.throws(
     () => configuration({ ...env, HOSTINGER_STAGE_DOMAIN: "" }),
     /HOSTINGER_STAGE_DOMAIN/,
@@ -108,14 +106,14 @@ test("requires all five distinct domains before any writes", async () => {
   let calls = 0;
   await assert.rejects(
     reconcile(
-      { ...env, HOSTINGER_PREVIEW_3_DOMAIN: "" },
+      { ...env, HOSTINGER_PREVIEW_1_DOMAIN: "" },
       {
         fetch: () => {
           calls++;
         },
       },
     ),
-    /HOSTINGER_PREVIEW_3_DOMAIN/,
+    /HOSTINGER_PREVIEW_1_DOMAIN/,
   );
   assert.equal(calls, 0);
 });
@@ -386,7 +384,7 @@ test("publishes a preview URL, without executing PR code or passing GitHub token
     !f.commands.some((c) => c.args.includes("checkout") || c.binary === "pnpm"),
   );
 });
-test("all five websites have separate releases and data; identical successful releases are not redeployed", async () => {
+test("all three websites have separate releases and data; identical successful releases are not redeployed", async () => {
   const f = fixture({
     branchRuns: true,
     pulls: [pull(1), pull(2), pull(3), pull(4)],
@@ -396,11 +394,11 @@ test("all five websites have separate releases and data; identical successful re
     f.commands
       .filter((c) => c.binary === "bash")
       .map((c) => c.env.DEPLOY_ENVIRONMENT),
-    ["production", "stage", "preview-1", "preview-2", "preview-3"],
+    ["production", "stage", "preview-1"],
   );
   assert.equal(
     new Set(f.deployments.map((d) => d.payload.dataDirectory)).size,
-    5,
+    3,
   );
   assert(
     f.calls.some(
@@ -530,7 +528,12 @@ test("updates one bot comment without touching human comments or adding duplicat
 test("waiting and queued comments never claim the current revision is deployed", async () => {
   const f = fixture({
     missingJob: true,
-    pulls: [pull(1), pull(2), pull(3), pull(4)],
+    pulls: [
+      pull(1, ["preview-slot-1"]),
+      pull(2, ["preview-slot-2"]),
+      pull(3, ["preview-slot-3"]),
+      pull(4),
+    ],
   });
   await reconcile(env, f.dependencies);
   assert.match(
@@ -540,6 +543,13 @@ test("waiting and queued comments never claim the current revision is deployed",
   const queued = f.comments.find((c) => c.issue_number === 4).body;
   assert.match(queued, /Label:\*\* `Queued`/);
   assert.doesNotMatch(queued, /\*\*Website:\*\*|Ready —/);
+  for (const number of [2, 3]) {
+    const oldSlotPull = f.comments.find(
+      (comment) => comment.issue_number === number,
+    );
+    assert.match(oldSlotPull.body, /Label:\*\* `Queued`/);
+    assert.doesNotMatch(oldSlotPull.body, /\*\*Website:\*\*|Ready —/);
+  }
   assert(f.comments.every((c) => !c.body.includes("Ready —")));
 });
 
@@ -561,15 +571,15 @@ test("a queued PR's existing comment gains its website when a slot becomes avail
   const pulls = [pull(1), pull(2), pull(3), pull(4)];
   const f = fixture({ pulls });
   await reconcile(env, f.dependencies);
-  const queued = f.comments.find((item) => item.issue_number === 4);
+  const queued = f.comments.find((item) => item.issue_number === 2);
   assert.match(queued.body, /No website is assigned yet/);
   const id = queued.id;
   pulls.shift();
   await reconcile(env, f.dependencies);
-  const assigned = f.comments.filter((item) => item.issue_number === 4);
+  const assigned = f.comments.filter((item) => item.issue_number === 2);
   assert.equal(assigned.length, 1);
   assert.equal(assigned[0].id, id);
-  assert.match(assigned[0].body, /https:\/\/pr3.example.com\//);
+  assert.match(assigned[0].body, /https:\/\/pr1.example.com\//);
   assert.match(assigned[0].body, /Ready —/);
   assert.doesNotMatch(assigned[0].body, /`Queued`/);
 });
